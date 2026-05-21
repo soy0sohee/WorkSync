@@ -10,9 +10,8 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
+# Spring secret config
 src/main/resources/application-secret.yml
-src/main/resources/application-local.yml
-src/main/resources/application-prod.yml
 src/main/resources/templates/
 
 # Package Files #
