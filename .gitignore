@@ -10,6 +10,11 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
+src/main/resources/application-secret.yml
+src/main/resources/application-local.yml
+src/main/resources/application-prod.yml
+src/main/resources/templates/
+
 # Package Files #
 *.jar
 !**/gradle/wrapper/gradle-wrapper.jar
