@@ -54,7 +54,7 @@ public class CustomUserDetails implements UserDetails {
         return employee.getStatus() == EmployeeStatus.ACTIVE;
     }
 
-    public Long getEmployeeId() {
+    public Long getId() {
         return employee.getId();
     }
 }
