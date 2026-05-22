@@ -172,23 +172,24 @@ export default function Dashboard() {
                     >
                       <div className={s.postBody}>
                         <p className={s.postTitle}>
-                          {post.title}
                           {isNotice && (
-                            <span className={s.postNoticeBadge}>공지</span>
+                            <span className={s.postNoticeBadge}>공지사항</span>
                           )}
+                          {post.title}
                         </p>
 
-                        <p className={s.postMeta}>
-                          {post.author.name} · {post.createdAt}
-                        </p>
-                      </div>
-                      <div className={s.postStats}>
-                        <span className={s.postStat}>
-                          <ThumbsUp size={11} /> {post.likes}
-                        </span>
-                        <span className={s.postStat}>
-                          <MessageCircle size={11} /> {post.comments}
-                        </span>
+                        <div className={s.postMeta}>
+                          <span style={{ marginRight: 6 }}>
+                            <WSAvatar src={post.author.avatar} size={21} />
+                          </span>
+                          <span style={{ marginRight: 10 }}>
+                            {post.author.name}
+                          </span>
+                          ·{" "}
+                          <span style={{ marginLeft: 10 }}>
+                            {post.createdAt}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   );
