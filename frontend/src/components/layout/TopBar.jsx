@@ -155,6 +155,7 @@ export function TopBar({ pathname }) {
                 </div>
               ))}
             </div>
+            <div className={styles.notifFooter}></div>
           </div>
         )}
       </div>
