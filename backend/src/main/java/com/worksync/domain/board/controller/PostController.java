@@ -42,7 +42,8 @@ public class PostController {
     public  ResponseEntity<Long>createPost(
             @PathVariable Long boardId,
             @RequestBody @Valid PostCreateRequest req,
-            @AuthenticationPrincipal CustomUserDetails user){
+            @AuthenticationPrincipal CustomUserDetails user)
+    {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(postService.createPost(boardId,req,user));
     }

@@ -6,13 +6,16 @@ import com.worksync.domain.board.entity.BoardType;
 import com.worksync.domain.board.repository.BoardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BoardService {
     private final BoardRepository boardRepository;
+
     public List<BoardResponse> getBoards (BoardType boardType,Long departmentId){
         List<Board>boards;
         //boardType과 departmentId 둘다 있으면 둘다 필터링
@@ -28,17 +31,19 @@ public class BoardService {
         } else{
             boards=boardRepository.findAll();
         }
+
     return boards.stream()
             .map(BoardResponse::from)
             .toList();
-            }
-            //게시판 단건 조회
+    }
+
+    //게시판 단건 조회
     public BoardResponse getBoard(Long boardId){
         Board board=boardRepository.findById(boardId)
                 .orElseThrow(()->new RuntimeException("게시판 없음"));
         return BoardResponse.from(board);
     }
-        }
+}
 
 
 
