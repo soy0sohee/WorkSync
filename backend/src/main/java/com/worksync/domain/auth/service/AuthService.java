@@ -28,7 +28,7 @@ public class AuthService {
     private static final int MAX_LOGIN_FAIL = 5;
     private static final int LOCK_MINUTES = 30;
 
-    @Transactional
+    @Transactional(noRollbackFor = CustomException.class)
     public LoginResponse login(LoginRequest request) {
         Employee employee = employeeRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
@@ -41,7 +41,7 @@ public class AuthService {
 
         // 재직 상태 확인 — INACTIVE는 로그인 차단
         if (employee.getStatus() == EmployeeStatus.INACTIVE) {
-            throw new CustomException(ErrorCode.ACCOUNT_LOCKED);
+            throw new CustomException(ErrorCode.EMPLOYEE_INACTIVE);
         }
 
         // 비밀번호 확인
@@ -71,7 +71,6 @@ public class AuthService {
                 .build();
     }
 
-    @Transactional
     public String reissue(ReissueRequest request) {
         String refreshToken = request.getRefreshToken();
 
@@ -85,5 +84,9 @@ public class AuthService {
 
         return jwtTokenProvider.generateAccessToken(
                 employee.getId(), employee.getEmail(), employee.getRole().name());
+    }
+
+    public void logout(Long employeeId) {
+        // 클라이언트에서 토큰 삭제 — 일단은 서버는 별도 처리 없음(팀원과 상의해야함)
     }
 }
