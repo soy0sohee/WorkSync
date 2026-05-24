@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
     const { accessToken, login, refresh, logout } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
 
+    // 인증 헤더 토큰 추가
     const authFetch = async (url, options = {}) => {
         await fetch(url, {
             method: options.method || 'GET',
