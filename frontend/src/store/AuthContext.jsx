@@ -13,14 +13,14 @@ export function AuthProvider({ children }) {
 
     // 인증 헤더 토큰 추가
     const authFetch = async (url, options = {}) => {
-        await fetch(url, {
+        return await fetch(url, {
             method: options.method || 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${accessToken}`,
                 ...options.headers
             },
-            boby: options.body
+            body: options.body
         })
             .then((response) => {
                 if (response.status === 401) {
@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
                                 'Authorization': `Bearer ${accessToken}`,
                                 ...options.headers
                             },
-                            boby: options.body
+                            body: options.body
                         })
                     })
                 }
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
         };
         
         loginCheck();
-    }, [accessToken]);
+    }, []);
 
     const authValue = { 
         accessToken, 
