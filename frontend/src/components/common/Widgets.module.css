@@ -419,8 +419,6 @@
 }
 
 /* ====== Form Field ====== */
-.field {
-}
 .fieldLabel {
   display: flex;
   align-items: center;
@@ -462,11 +460,14 @@
 /* ====== Input/Textarea/Select ====== */
 .inputBase {
   width: 100%;
+  height: 40px;
+  box-sizing: border-box;
   border: 1px solid var(--ws-border);
   border-radius: 8px;
   padding: 10px 16px;
   color: var(--ws-text-800);
-  font-size: 14px;
+  font-size: 13.5px;
+  line-height: 18px;
   outline: none;
   background: #fff;
   transition: border-color 0.15s;
@@ -511,12 +512,15 @@
 }
 .selectBase {
   width: 100%;
+  height: 40px;
+  box-sizing: border-box;
   appearance: none;
   border: 1px solid var(--ws-border);
   border-radius: 8px;
   padding: 10px 16px;
   color: var(--ws-text-800);
   font-size: 13.5px;
+  line-height: 18px;
   outline: none;
   background: #fff;
   transition: border-color 0.15s;
@@ -542,11 +546,15 @@
 }
 .dateInputBase {
   width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  appearance: none;
   border: 1px solid var(--ws-border);
   border-radius: 8px;
   padding: 10px 38px 10px 16px;
   color: var(--ws-text-800);
   font-size: 13.5px;
+  line-height: 18px;
   outline: none;
   background: #fff;
   transition: border-color 0.15s;
@@ -559,6 +567,10 @@
   cursor: not-allowed;
 }
 .dateInputBase::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   opacity: 0;
   cursor: pointer;
 }
@@ -797,6 +809,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  text-align: center;
   padding: 32px;
   border-radius: 10px;
   border: 2px dashed var(--ws-border);
@@ -1108,4 +1121,50 @@
   color: var(--ws-text-400);
   font-size: 12px;
   margin: 0;
+}
+
+.attachRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid var(--ws-border);
+  border-radius: 8px;
+  margin-top: 10px;
+}
+.attachLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.attachIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+.attachName {
+  color: var(--ws-text-800);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+.attachSize {
+  color: var(--ws-text-500);
+  font-size: 11.5px;
+  margin: 0;
+}
+.attachDl {
+  color: var(--ws-text-400);
+  transition: color 0.15s;
+}
+.attachDl:hover {
+  color: var(--ws-text-600);
 }
