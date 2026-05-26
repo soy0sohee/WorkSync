@@ -38,6 +38,9 @@ public class DepartmentService {
   // 부서 생성
   @Transactional //이걸로 읽기전용 해제후 작성가능
   public DepartmentResponse createDept(DepartmentRequest request){
+    if (departmentRepository.existsByName(request.getName())) {
+      throw new CustomException(ErrorCode.DUPLICATE_DEPARTMENT_NAME);
+    }
     Department dept = Department.builder()
             .name(request.getName())
             .build();
@@ -49,6 +52,9 @@ public class DepartmentService {
   public DepartmentResponse updateDept(Long id, DepartmentRequest request){
     Department dept = departmentRepository.findById(id)
             .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+    if (departmentRepository.existsByName(request.getName())) {
+      throw new CustomException(ErrorCode.DUPLICATE_DEPARTMENT_NAME);
+    }
     dept.updateName(request.getName()); //entity 메서드로 이름변겯
     return DepartmentResponse.from(dept);
   }

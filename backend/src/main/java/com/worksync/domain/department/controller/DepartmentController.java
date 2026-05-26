@@ -7,46 +7,51 @@ import com.worksync.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController //json형태로 응답반환
+@RestController
 @RequestMapping("/api/departments")
 @RequiredArgsConstructor
 public class DepartmentController {
 
   private final DepartmentService departmentService;
 
-  @GetMapping
   // 전체 부서목록 조회
-  public ApiResponse<List<DepartmentResponse>> findAll(){
-    return ApiResponse.ok(departmentService.findDept());
+  @GetMapping
+  public ResponseEntity<ApiResponse<List<DepartmentResponse>>> findAll() {
+    return ResponseEntity.ok(ApiResponse.ok(departmentService.findDept()));
   }
 
-  @GetMapping("/{id}")
   // 단건 부서 조회
-  public ApiResponse<DepartmentResponse> findById(@PathVariable Long id){
-    return ApiResponse.ok(departmentService.findByDept(id));
+  @GetMapping("/{id}")
+  public ResponseEntity<ApiResponse<DepartmentResponse>> findById(@PathVariable Long id) {
+    return ResponseEntity.ok(ApiResponse.ok(departmentService.findByDept(id)));
   }
 
-  // 부서생성
+  // 부서 생성 (ADMIN 전용)
   @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  public ApiResponse<DepartmentResponse> createDept(@Valid @RequestBody DepartmentRequest request){
-    return ApiResponse.created(departmentService.createDept(request));
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<ApiResponse<DepartmentResponse>> createDept(@Valid @RequestBody DepartmentRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.created(departmentService.createDept(request)));
   }
 
-  // 부서명 수정
+  // 부서명 수정 (ADMIN 전용)
   @PutMapping("/{id}")
-  public ApiResponse<DepartmentResponse> updateDept(@PathVariable Long id, @Valid @RequestBody DepartmentRequest request){
-    return ApiResponse.ok(departmentService.updateDept(id,request));
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<ApiResponse<DepartmentResponse>> updateDept(@PathVariable Long id, @Valid @RequestBody DepartmentRequest request) {
+    return ResponseEntity.ok(ApiResponse.ok(departmentService.updateDept(id, request)));
   }
 
-  // 부서 삭제
+  // 부서 삭제 (ADMIN 전용)
   @DeleteMapping("/{id}")
-  public ApiResponse<Void> delete(@PathVariable Long id){
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
     departmentService.deleteDept(id);
-    return ApiResponse.ok(null);
+    return ResponseEntity.ok(ApiResponse.ok(null));
   }
 }
