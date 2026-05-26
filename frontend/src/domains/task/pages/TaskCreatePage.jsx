@@ -53,14 +53,11 @@ export default function TaskNew() {
 
     // 확장자 검사
     if (!ALLOWED_EXT.includes(ext)) {
-      errors.push('확장자 에러');
-      alert(`허용되지 않는 확장자입니다.`);
+      errors.push('허용하지 않은 확장자입니다.');
     }
-
     // 용량 검사
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      errors.push('파일 크기 초과');
-      alert(`파일 크기가 ${MAX_SIZE_MB}MB를 초과했습니다.`)
+      errors.push(`파일 크기가 ${MAX_SIZE_MB}MB를 초과했습니다.`);
     }
 
     return errors;
@@ -71,10 +68,15 @@ export default function TaskNew() {
       return;
     }
 
-    const validated = newFiles.map((file) => ({
-      file: file,
-      errors: validationFile(file)
+    const validated = newFiles.map((item) => ({
+      file: item,
+      errors: validationFile(item)
     }));
+
+    const errorFiles = validated.filter((item) => item.errors.length > 0);
+    errorFiles.forEach((item) => {
+      alert(`${item.file.name}: ${item.errors.join(', ')}`);
+    });
 
     const validOnly = validated.filter((item) => item.errors.length === 0);
 
