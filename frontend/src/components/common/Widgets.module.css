@@ -228,7 +228,7 @@
 }
 .searchInputField {
   width: 100%;
-  padding: 8px 36px 8px 36px;
+  padding: 12px 36px 10px 36px;
   border: 1px solid var(--ws-border);
   background: #fff;
   color: var(--ws-text-800);
@@ -251,7 +251,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 13px 12px;
   border: 1px solid var(--ws-border);
   background: #fff;
   border-radius: 8px;
@@ -674,9 +674,10 @@
 .searchInputCompactClear:hover {
   color: var(--ws-text-600);
 }
+/* NavBar 검색어 입력 input */
 .searchInputCompactField {
-  width: 100%;
-  padding: 8px 36px 8px 40px;
+  width: 300px;
+  padding: 10px 36px 10px 40px;
   border: 1px solid var(--ws-border);
   border-radius: 8px;
   background: #fff;
@@ -696,6 +697,7 @@
 .filterDD {
   position: relative;
 }
+/* NavBar 드롭다운 */
 .filterDDBtn {
   display: flex;
   align-items: center;
@@ -1021,11 +1023,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
+
   margin-bottom: 24px;
 }
 .filterBarSearch {
   flex: 1;
+  height: 36px;
 }
+/* NavBar 버튼 */
 .filterBarAction {
   display: flex;
   align-items: center;
@@ -1047,6 +1052,7 @@
 }
 .filterBarActionSecondary {
   background: transparent;
+
   color: var(--ws-text-700);
   border: 1px solid var(--ws-border);
 }

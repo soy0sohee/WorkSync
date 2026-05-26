@@ -59,13 +59,26 @@ export default function Organization() {
       <WSFilterBar
         filters={[{ label: "부서", key: "dept", options: DEPT_OPTIONS }]}
         filterValues={{ dept: deptFilter }}
-        onFilterChange={(_key, value) => { setDeptFilter(value); setPage(1); }}
+        onFilterChange={(_key, value) => {
+          setDeptFilter(value);
+          setPage(1);
+        }}
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="검색어를 입력하세요"
         actions={[
-          { label: "부서 관리", onClick: () => setShowDeptModal(true), icon: <Plus size={16} />, variant: "secondary" },
-          { label: "직원 추가", onClick: () => navigate("/organization/employee-add"), icon: <Plus size={16} />, variant: "primary" },
+          {
+            label: "부서 관리",
+            onClick: () => setShowDeptModal(true),
+            icon: <Plus size={16} />,
+            variant: "primary",
+          },
+          {
+            label: "직원 추가",
+            onClick: () => navigate("/organization/employee-add"),
+            icon: <Plus size={16} />,
+            variant: "primary",
+          },
         ]}
       />
 
@@ -101,10 +114,20 @@ export default function Organization() {
       </div>
 
       <div className={s.pagination}>
-        <WSPagination total={filtered.length} page={page} perPage={perPage} onPageChange={setPage} />
+        <WSPagination
+          total={filtered.length}
+          page={page}
+          perPage={perPage}
+          onPageChange={setPage}
+        />
       </div>
 
-      <WSModal isOpen={showDeptModal} onClose={() => setShowDeptModal(false)} title="부서 관리" size="md">
+      <WSModal
+        isOpen={showDeptModal}
+        onClose={() => setShowDeptModal(false)}
+        title="부서 관리"
+        size="md"
+      >
         {departments.length === 0 ? (
           <WSEmptyState
             icon={<Building2 size={32} />}
@@ -112,14 +135,20 @@ export default function Organization() {
             description="새 부서를 추가하여 조직 관리 시스템을 시작해 보세요. 더욱 효율적인 업무 관리가 가능합니다."
             action={{
               label: "신규 부서 추가",
-              onClick: () => { setShowAddDeptModal(true); setShowDeptModal(false); },
+              onClick: () => {
+                setShowAddDeptModal(true);
+                setShowDeptModal(false);
+              },
               icon: <Plus size={16} />,
             }}
           />
         ) : (
           <>
             <button
-              onClick={() => { setShowAddDeptModal(true); setShowDeptModal(false); }}
+              onClick={() => {
+                setShowAddDeptModal(true);
+                setShowDeptModal(false);
+              }}
               className={s.addDeptBtn}
             >
               <Plus size={16} />
@@ -140,7 +169,11 @@ export default function Organization() {
 
       <WSModal
         isOpen={showAddDeptModal}
-        onClose={() => { setShowAddDeptModal(false); setShowDeptModal(true); setNewDeptName(""); }}
+        onClose={() => {
+          setShowAddDeptModal(false);
+          setShowDeptModal(true);
+          setNewDeptName("");
+        }}
         title="부서 등록"
         size="md"
       >
@@ -157,7 +190,11 @@ export default function Organization() {
           <WSButton
             label="취소"
             variant="secondary"
-            onClick={() => { setShowAddDeptModal(false); setShowDeptModal(true); setNewDeptName(""); }}
+            onClick={() => {
+              setShowAddDeptModal(false);
+              setShowDeptModal(true);
+              setNewDeptName("");
+            }}
           />
           <WSButton
             label="추가"
