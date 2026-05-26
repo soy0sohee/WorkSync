@@ -289,10 +289,17 @@ export function WSFileUploadZone({
 }) {
   const inputRef = React.useRef(null);
 
+  // 드래그로 파일 선택 했을 때
   const handleDrop = (e) => {
     e.preventDefault();
     onDragStateChange(false);
     const files = Array.from(e.dataTransfer.files);
+    onFilesAdded(files);
+  };
+
+  // 클릭으로 파일 선택 했을 때
+  const handleChange = (e) => {
+    const files = Array.from(e.target.files);
     onFilesAdded(files);
   };
 
@@ -324,9 +331,7 @@ export function WSFileUploadZone({
         accept={accept}
         multiple
         className={s.uploadInput}
-        onChange={(e) => {
-          if (e.target.files) onFilesAdded(Array.from(e.target.files));
-        }}
+        onChange={handleChange}
       />
     </>
   );

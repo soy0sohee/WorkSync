@@ -28,6 +28,8 @@ const PROGRESS_OPTIONS = [
 
 const TOOLBAR_ITEMS = ["굵게", "기울임", "밑줄", "|", "목록"];
 
+const MAX_SIZE_MB = 50;
+const ALLOWED_EXT = ['.pdf', '.pptx', '.xlsx', '.docx'];
 
 export default function TaskNew() {
   const navigate = useNavigate();
@@ -45,15 +47,45 @@ export default function TaskNew() {
   const [submitted, setSubmitted] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  function addFiles(newFiles) {
-    setFiles((prev) => [...prev, ...newFiles].slice(0, 10));
+  function validationFile(file) {
+    const errors = [];
+    const ext = '.' + file.name.split(".").pop().toLowerCase();
+
+    // 확장자 검사
+    if (!ALLOWED_EXT.includes(ext)) {
+      errors.push('확장자 에러');
+      alert(`허용되지 않는 확장자입니다.`);
+    }
+
+    // 용량 검사
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      errors.push('파일 크기 초과');
+      alert(`파일 크기가 ${MAX_SIZE_MB}MB를 초과했습니다.`)
+    }
+
+    return errors;
   }
 
-  function handleFileInput(e) {
-    if (e.target.files) addFiles(Array.from(e.target.files));
+  function addFiles(newFiles) {
+    if (!newFiles || newFiles.length === 0) {
+      return;
+    }
+
+    const validated = newFiles.map((file) => ({
+      file: file,
+      errors: validationFile(file)
+    }));
+
+    const validOnly = validated.filter((item) => item.errors.length === 0);
+
+    setFiles((prev) => {
+      const merged = [...prev, ...validOnly];
+      return merged.slice(0, 10);
+    });
   }
-  function handleRemove(idx) {
-    setFiles((prev) => prev.filter((_,i) => i !== idx));
+
+  function removeFiles(index) {
+    setFiles((prev) => prev.filter((_,i) => i !== index));
   }
 
   const isValid = form.title.trim().length > 0;
@@ -192,9 +224,10 @@ export default function TaskNew() {
               label="파일을 드래그하거나 클릭하여 업로드"
               helperText="PDF, DOCX, XLSX, PPTX - 최대 50MB"
             />
+
             <WSFileList
-              files={files}
-              onRemove={handleRemove}
+              files={files.map(({file}) => file)}
+              onRemove={removeFiles}
             />
           </WSCard>
 

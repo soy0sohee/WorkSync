@@ -58,55 +58,43 @@ export default function TaskDetail() {
                   </div>
                 </div>
                 <div className={s.infoCol}>
-                  <p className={s.infoLabel}>소속</p>
-                  <p className={s.infoValue}>기획팀</p>
-                </div>
-                <div className={s.infoCol}>
+                  <p className={s.infoLabel}>담당자</p>
+                  <div className={s.infoValue}>
+                    <div className={s.assigneeValue}>
+                      <WSAvatar src={task.assignee.avatar} name={task.assignee.name} size={24} />
+                      <span>{task.assignee.name} ({task.assignee.dept}, {task.assignee.role})</span>
+                    </div>
+                  </div>                
                   <p className={s.infoLabel}>작성자</p>
                   <div className={s.infoValue}>
                     <div className={s.assigneeValue}>
                       <WSAvatar src={task.assignee.avatar} name={task.assignee.name} size={24} />
-                      <span>{task.assignee.name}</span>
+                      <span>{task.assignee.name} ({task.assignee.dept}, {task.assignee.role})</span>
                     </div>
                   </div>
-                </div>
-                <div className={s.infoCol}>
                   <p className={s.infoLabel}>작성일</p>
                   <p className={s.infoValue}>2026-05-01</p>
                 </div>
+                
               </div>
               <div className={s.details}>
-                <div className={s.detailSection}>
-                  <h3>1. 금일 수행 업무</h3>
-                  <div className={s.detailLines}>
-                    <p>1) 전자결재 화면 UI 개발</p>
-                    <p>- 결재선 지정 모달 구현</p>
-                    <p>- 승인/반려 버튼 상태 처리</p>
-                    <p>- 모바일 반응형 레이아웃 수정</p>
-                  </div>
-                </div>
-                <div className={s.detailSection}>
-                  <h3>2) API 연동</h3>
-                  <div className={s.detailLines}>
-                    <p>- 결재 목록 조회 API 연결</p>
-                    <p>- Axios 인터셉터 토큰 처리 추가</p>
-                    <p>- 오류 응답 공통 핸들링 적용</p>
-                  </div>
-                </div>
-                <div className={s.detailSection}>
-                  <h3>3) DB 설계 검토</h3>
-                  <div className={s.detailLines}>
-                    <p>- 문서 데이터 승인상태 컬럼 추가</p>
-                    <p>- 결재 이력 테이블 인덱스 추가 검토</p>
-                  </div>
-                </div>
-                <div className={s.detailSection}>
-                  <h3>2. 이슈 사항</h3>
-                  <div className={s.detailLines}>
-                    <p>- 결재선 데이터 구조와 프론트 상태값 불일치 발생</p>
-                    <p>- Safari 브라우저에서 모달 스크롤 오류 확인</p>
-                    <p>- QA 환경 API 응답 속도 지연 현상 존재</p>
-                  </div>
+                <div className={s.detailLines}>
+                  <p>1. 금일 수행 업무</p>
+                  <p>1) 전자결재 화면 UI 개발</p>
+                  <p>- 결재선 지정 모달 구현</p>
+                  <p>- 승인/반려 버튼 상태 처리</p>
+                  <p>- 모바일 반응형 레이아웃 수정</p>
+                  <p>2) API 연동</p>
+                  <p>- 결재 목록 조회 API 연결</p>
+                  <p>- Axios 인터셉터 토큰 처리 추가</p>
+                  <p>- 오류 응답 공통 핸들링 적용</p>
+                  <p>3) DB 설계 검토</p>
+                  <p>- 문서 데이터 승인상태 컬럼 추가</p>
+                  <p>- 결재 이력 테이블 인덱스 추가 검토</p>
+                  <p>2. 이슈 사항</p>
+                  <p>- 결재선 데이터 구조와 프론트 상태값 불일치 발생</p>
+                  <p>- Safari 브라우저에서 모달 스크롤 오류 확인</p>
+                  <p>- QA 환경 API 응답 속도 지연 현상 존재</p>
                 </div>
               </div>
             </div>
