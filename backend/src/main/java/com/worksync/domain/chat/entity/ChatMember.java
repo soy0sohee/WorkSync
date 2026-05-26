@@ -35,4 +35,8 @@ public class ChatMember {
     @CreatedDate
     @Column(name = "joined_at", nullable = false, updatable = false)
     private LocalDateTime joinedAt;
+
+    public void updateLastRead(Long messageId) {
+        this.lastReadMessageId = messageId;
+    }
 }
