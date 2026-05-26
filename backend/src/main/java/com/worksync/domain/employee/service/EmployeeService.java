@@ -6,6 +6,7 @@ import com.worksync.domain.employee.dto.EmployeeCreateRequest;
 import com.worksync.domain.employee.dto.EmployeeResponse;
 import com.worksync.domain.employee.dto.EmployeeUpdateRequest;
 import com.worksync.domain.employee.entity.Employee;
+import com.worksync.domain.employee.entity.EmployeeRole;
 import com.worksync.domain.employee.entity.EmployeeStatus;
 import com.worksync.domain.employee.repository.EmployeeRepository;
 import com.worksync.global.exception.CustomException;
@@ -89,6 +90,7 @@ public class EmployeeService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .phone(request.getPhone())
                 .jobGrade(request.getJobGrade())
+                .role(request.getRole() != null ? request.getRole() : EmployeeRole.USER)
                 .department(department)
                 .profileImage(request.getProfileImage())
                 .hireDate(request.getHireDate())
@@ -116,6 +118,7 @@ public class EmployeeService {
                 request.getName(),
                 request.getPhone(),
                 request.getJobGrade(),
+                request.getRole(),
                 department,
                 request.getProfileImage(),
                 encodedPassword

@@ -77,11 +77,12 @@ public class Employee {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public void update(String name, String phone, JobGrade jobGrade, Department department,
-                       String profileImage, String encodedPassword) {
+    public void update(String name, String phone, JobGrade jobGrade, EmployeeRole role,
+                       Department department, String profileImage, String encodedPassword) {
         if (name != null) this.name = name;
         if (phone != null) this.phone = phone;
         if (jobGrade != null) this.jobGrade = jobGrade;
+        if (role != null) this.role = role;
         if (department != null) this.department = department;
         if (profileImage != null) this.profileImage = profileImage;
         if (encodedPassword != null) this.password = encodedPassword;
