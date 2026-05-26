@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { NOTIFICATIONS, TEAM_MEMBERS } from "../../constants/mockData";
 import styles from "./TopBar.module.css";
-import useAuthContext from "../../store/AuthContext";
 
 const me = TEAM_MEMBERS[3];
 
@@ -65,7 +64,6 @@ export function TopBar({ pathname }) {
     breadcrumb: ["홈"],
   };
   const unreadCount = NOTIFICATIONS.filter((n) => !n.read).length;
-  const { logout } = useAuthContext();
 
   return (
     <header className={styles.header}>
@@ -179,6 +177,7 @@ export function TopBar({ pathname }) {
               alt={me.name}
               className={styles.profileAvatar}
             />
+            {/* 프로필이미지 상태표시(온라인)  */}
             <span
               className={`${styles.profileStatus} ${isAway ? styles.profileStatusAway : ""}`}
             />
@@ -218,12 +217,26 @@ export function TopBar({ pathname }) {
                 </button>
               );
             })} */}
-            <div className={styles.menuDivider}>
-              <button className={`${styles.menuItem} ${styles.logoutItem}`} type="button" onClick={logout}>
-                <LogOut size={15} />
-                <span>로그아웃</span>
-              </button>
-            </div>
+
+            <button
+              className={`${styles.menuItem} ${styles.profileAwayBadge}`}
+              onClick={() => {
+                setIsAway(!isAway);
+                setShowProfile(false); // 자리비움 클릭했을 때 드롭다운 자동 닫힘
+                console.log("isAway 변경:", !isAway);
+              }}
+              type="button"
+            >
+              <Coffee size={15} />
+              {isAway ? "온라인으로 변경" : "자리비움"}
+            </button>
+            <button
+              className={`${styles.menuItem} ${styles.logoutItem}`}
+              type="button"
+            >
+              <LogOut size={15} />
+              <span>로그아웃</span>
+            </button>
           </div>
         )}
       </div>
