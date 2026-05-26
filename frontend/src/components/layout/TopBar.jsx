@@ -217,7 +217,7 @@ export function TopBar({ pathname }) {
                   <span>{item.label}</span>
                 </button>
               );
-            })}
+            })} */}
             <div className={styles.menuDivider}>
               <button className={`${styles.menuItem} ${styles.logoutItem}`} type="button" onClick={logout}>
                 <LogOut size={15} />
