@@ -1,6 +1,6 @@
 package com.worksync.domain.employee.dto;
 
-import com.worksync.domain.employee.entity.EmployeeStatus;
+import com.worksync.domain.employee.entity.EmployeeRole;
 import com.worksync.domain.employee.entity.JobGrade;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +12,7 @@ public class EmployeeUpdateRequest {
     private String phone;
     private String password;
     private JobGrade jobGrade;
-    private EmployeeStatus status;
+    private EmployeeRole role;
     private Long departmentId;
     private String profileImage;
 }

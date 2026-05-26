@@ -5,6 +5,8 @@ import com.worksync.domain.employee.dto.EmployeeResponse;
 import com.worksync.domain.employee.dto.EmployeeUpdateRequest;
 import com.worksync.domain.employee.entity.EmployeeStatus;
 import com.worksync.domain.employee.service.EmployeeService;
+import com.worksync.global.exception.CustomException;
+import com.worksync.global.exception.ErrorCode;
 import com.worksync.global.response.ApiResponse;
 import com.worksync.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -88,12 +90,15 @@ public class EmployeeController {
                 employeeService.updateMyStatus(id, status)));
     }
 
-    // 내 상태 변경 — 로그인한 본인의 상태를 ACTIVE / AWAY로 전환
+    // 내 상태 변경 — 로그인한 본인의 상태를 ACTIVE / AWAY로 전환 (INACTIVE는 ADMIN 전용)
     @PatchMapping("/me/status")
     public ResponseEntity<ApiResponse<EmployeeResponse>> updateMyStatus(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam("status") EmployeeStatus status) {
 
+        if (status == EmployeeStatus.INACTIVE) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
         return ResponseEntity.ok(ApiResponse.ok(
                 employeeService.updateMyStatus(userDetails.getId(), status)));
     }
