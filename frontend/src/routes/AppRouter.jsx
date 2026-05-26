@@ -60,6 +60,7 @@ export const router = createBrowserRouter([
       { path: "tasks", Component: TaskListPage },
       { path: "tasks/new", Component: TaskCreatePage },
       { path: "tasks/:id", Component: TaskDetailPage },
+      { path: "tasks/edit/:id", Component: TaskUpdatePage },
       { path: "messenger", Component: ChatPage },
       { path: "audit-log", Component: AuditLogPage },
       { path: "*", Component: NotFound },
