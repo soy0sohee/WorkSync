@@ -4,6 +4,8 @@ import com.worksync.domain.board.dto.BoardResponse;
 import com.worksync.domain.board.entity.Board;
 import com.worksync.domain.board.entity.BoardType;
 import com.worksync.domain.board.repository.BoardRepository;
+import com.worksync.global.exception.CustomException;
+import com.worksync.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +43,7 @@ public class BoardService {
     @Transactional(readOnly = true)
     public BoardResponse getBoard(Long boardId){
         Board board=boardRepository.findById(boardId)
-                .orElseThrow(()->new RuntimeException("게시판 없음"));
+                .orElseThrow(()->new CustomException(ErrorCode.BOARD_NOT_FOUND));
         return BoardResponse.from(board);
     }
 }

@@ -10,6 +10,8 @@ import com.worksync.domain.board.entity.Post;
 import com.worksync.domain.board.repository.BoardRepository;
 import com.worksync.domain.board.repository.PostRepository;
 import com.worksync.domain.employee.entity.EmployeeRole;
+import com.worksync.global.exception.CustomException;
+import com.worksync.global.exception.ErrorCode;
 import com.worksync.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -41,10 +43,10 @@ public class PostService {
     @Transactional(readOnly = true)
     public PostResponse getPost(Long boardId,Long postId){
         Post post=postRepository.findById(postId)
-                .orElseThrow(()-> new RuntimeException("게시판 없음"));
+                .orElseThrow(()-> new CustomException(ErrorCode.POST_NOT_FOUND));
 
         if (!post.getBoard().getId().equals(boardId)){
-            throw new RuntimeException("해당 게시판의 게시글이 아닙니다");
+            throw new CustomException(ErrorCode.BOARD_NOT_FOUND);
         }
         return PostResponse.from(post);
     }
@@ -53,11 +55,11 @@ public class PostService {
     @Transactional
     public Long createPost(Long boardId, PostCreateRequest req,CustomUserDetails user){
         Board board=boardRepository.findById(boardId)
-                .orElseThrow(()->new RuntimeException("게시판 없음"));
+                .orElseThrow(()->new CustomException(ErrorCode.BOARD_NOT_FOUND));
         //공지글 어드민만 가능하게 권한 제어
         if(board.getBoardType() == BoardType.NOTICE){
             if(user.getEmployee().getRole() != EmployeeRole.ADMIN){
-                throw new RuntimeException("공지사항은 관리자만 작성 가능합니다.");
+                throw new CustomException(ErrorCode.FORBIDDEN);
             }
         }
         Post post=Post.builder()
@@ -73,15 +75,14 @@ public class PostService {
     @Transactional
     public PostResponse updatePost(Long boardId, Long postId, PostUpdateRequest req,CustomUserDetails user) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("게시글 없음"));
-
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
         //본인 게시글 체크 로직
         if (!post.getAuthor().getId().equals(user.getEmployee().getId())) {
-            throw new RuntimeException("본인 게시글이 아닙니다.");
+            throw new CustomException(ErrorCode.FORBIDDEN);
         }
         if (!post.getBoard().getId().equals(boardId)){
-            throw new RuntimeException("해당 게시판의 게시글이 아닙니다");
+            throw new CustomException(ErrorCode.BOARD_NOT_FOUND);
         }
         post.update(req.getTitle(), req.getContent());
         return PostResponse.from(post);
@@ -91,14 +92,14 @@ public class PostService {
     @Transactional
     public void deletePost(Long boardId,Long postId,CustomUserDetails user){
         Post post=postRepository.findById(postId)
-                    .orElseThrow(()->new RuntimeException("게시글 없음"));
+                    .orElseThrow(()->new CustomException(ErrorCode.POST_NOT_FOUND));
 
         //본인확인 로직
         if(!post.getAuthor().getId().equals(user.getEmployee().getId())){
-            throw  new RuntimeException("본인 게시글만 삭제 가능합니다.");
+            throw new CustomException(ErrorCode.FORBIDDEN);
         }
         if (!post.getBoard().getId().equals(boardId)){
-            throw new RuntimeException("해당 게시판의 게시글이 아닙니다");
+            throw new CustomException(ErrorCode.BOARD_NOT_FOUND);
         }
          postRepository.delete(post);
     }

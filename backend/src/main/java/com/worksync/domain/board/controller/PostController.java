@@ -4,6 +4,7 @@ import com.worksync.domain.board.dto.PostCreateRequest;
 import com.worksync.domain.board.dto.PostResponse;
 import com.worksync.domain.board.dto.PostUpdateRequest;
 import com.worksync.domain.board.service.PostService;
+import com.worksync.global.response.ApiResponse;
 import com.worksync.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,48 +23,48 @@ public class PostController {
 
     //게시글 목록 조회
     @GetMapping("/{boardId}/posts")
-    public ResponseEntity<Page<PostResponse>>getPosts(
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getPosts(
             @PathVariable Long boardId,
-            @RequestParam(required = false)String keyword,
-    Pageable pageable)     {
-    return ResponseEntity.ok(postService.getPosts(boardId,keyword,pageable));
+            @RequestParam(required = false) String keyword,
+            Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.ok(postService.getPosts(boardId, keyword, pageable)));
     }
 
     //게시글 상세 조회
     @GetMapping("/{boardId}/posts/{postId}")
-    public  ResponseEntity<PostResponse>getPost(
+    public ResponseEntity<ApiResponse<PostResponse>> getPost(
             @PathVariable Long boardId,
-            @PathVariable Long postId){
-        return ResponseEntity.ok(postService.getPost(boardId, postId));
+            @PathVariable Long postId) {
+        return ResponseEntity.ok(ApiResponse.ok(postService.getPost(boardId, postId)));
     }
 
     //게시글 작성
     @PostMapping("/{boardId}/posts")
-    public  ResponseEntity<Long>createPost(
+    public ResponseEntity<ApiResponse<Long>> createPost(
             @PathVariable Long boardId,
             @RequestBody @Valid PostCreateRequest req,
-            @AuthenticationPrincipal CustomUserDetails user)
-    {
+            @AuthenticationPrincipal CustomUserDetails user) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(postService.createPost(boardId,req,user));
+                .body(ApiResponse.created(postService.createPost(boardId, req, user)));
     }
 
     //게시글 수정
     @PutMapping("/{boardId}/posts/{postId}")
-    public  ResponseEntity<PostResponse> updatePost(
+    public ResponseEntity<ApiResponse<PostResponse>> updatePost(
             @PathVariable Long boardId,
             @PathVariable Long postId,
             @RequestBody PostUpdateRequest req,
-            @AuthenticationPrincipal CustomUserDetails user){
-        return ResponseEntity.ok(postService.updatePost(boardId, postId, req, user));
+            @AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(ApiResponse.ok(postService.updatePost(boardId, postId, req, user)));
     }
+
     //게시글 삭제
-    @DeleteMapping ("/{boardId}/posts/{postId}")
-    public ResponseEntity<Void>deletePost(
+    @DeleteMapping("/{boardId}/posts/{postId}")
+    public ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable Long boardId,
             @PathVariable Long postId,
-            @AuthenticationPrincipal CustomUserDetails user){
+            @AuthenticationPrincipal CustomUserDetails user) {
         postService.deletePost(boardId, postId, user);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }
