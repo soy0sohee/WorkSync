@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ChevronRight, Building2 } from "lucide-react";
-import { TEAM_MEMBERS } from "../../../constants/mockData";
+import { Plus, ChevronRight, Building2, ClipboardList } from "lucide-react";
+import { getDepartments, getEmployee, CreateDepartments } from "../services/organizationApi";
+import useAuthContext from "../../../store/AuthContext"
 import {
   WSAvatar,
   WSPagination,
@@ -13,37 +14,46 @@ import {
   WSInput,
   WSButton,
 } from "../../../components/common/CommonWidgets";
+import { WSTableHeader, WSTableRow } from "../../../components/common/LayoutComponents";
 import s from "./OrganizationPage.module.css";
 
-const ORGANIZATION_DATA = TEAM_MEMBERS.map((member) => ({
-  dept: member.dept,
-  rank: member.role,
-  name: member.name,
-  email: member.email,
-  phone: `010-1234-56${member.id}8`,
-  joinDate: "2020-03-29",
-  avatar: member.avatar,
-}));
+const TH_COL = ["부서명", "직급", "이름", "이메일", "연락처", "입사일"];
+const GRID_TEMPLATE = "1fr 1fr 1fr 1fr 1fr 1fr";
 
-const DEPT_OPTIONS = [
-  { key: "전체", label: "전체" },
-  { key: "경영진", label: "경영진" },
-  { key: "제품팀", label: "제품팀" },
-  { key: "개발팀", label: "개발팀" },
-  { key: "디자인팀", label: "디자인팀" },
-];
-
-export default function Organization() {
+export default function OrganizationPage() {
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("전체");
   const [page, setPage] = useState(1);
   const [showDeptModal, setShowDeptModal] = useState(false);
   const [showAddDeptModal, setShowAddDeptModal] = useState(false);
-  const [departments, setDepartments] = useState(["경영진", "개발팀"]);
+  const [departments, setDepartments] = useState([]);
   const [newDeptName, setNewDeptName] = useState("");
   const navigate = useNavigate();
+  const { accessToken } = useAuthContext();
+  const [employee, setEmployee] = useState([]);
+  
+  useEffect(() => {
+    if (!accessToken) return;
+    getDepartments(accessToken).then((data) => {
+      console.log(data);
+      setDepartments(Array.isArray(data.data) ? data.data : []);
+    });
+  },[accessToken]);
 
-  const filtered = ORGANIZATION_DATA.filter((item) => {
+  const DEPT_OPTIONS = departments.map((dept) => ({
+    key: dept.id,
+    label: dept.name
+  }));
+
+  useEffect(() => {
+    if (!accessToken) return;
+    getEmployee(accessToken).then((data) => {
+      console.log(data);
+      setEmployee(Array.isArray(data.data) ? data.data : []);
+    });
+  },[accessToken]);
+
+  const filtered = employee.filter((item) => {
     const matchSearch =
       item.name.toLowerCase().includes(search.toLowerCase()) ||
       item.email.toLowerCase().includes(search.toLowerCase());
@@ -57,7 +67,7 @@ export default function Organization() {
   return (
     <div>
       <WSFilterBar
-        filters={[{ label: "부서", key: "dept", options: DEPT_OPTIONS }]}
+        filters={[{ label: "전체", key: "dept", options: DEPT_OPTIONS }]}
         filterValues={{ dept: deptFilter }}
         onFilterChange={(_key, value) => { setDeptFilter(value); setPage(1); }}
         searchValue={search}
@@ -70,34 +80,31 @@ export default function Organization() {
       />
 
       <div className={s.table}>
-        <div className={s.tableHeader}>
-          <span>부서명</span>
-          <span>직급</span>
-          <span>이름</span>
-          <span>이메일</span>
-          <span>연락처</span>
-          <span>입사일</span>
-        </div>
+        <WSTableHeader
+          columns={TH_COL}
+          gridTemplate={GRID_TEMPLATE}
+        />
 
         {paginatedData.length === 0 ? (
           <div className={s.empty}>
-            <p className={s.emptyText}>등록된 직원이 없습니다</p>
+            <WSEmptyState
+              icon={<ClipboardList size={32} />}
+              title="등록된 직원이 없습니다"
+            />
           </div>
-        ) : (
-          paginatedData.map((item, index) => (
-            <div key={index} className={s.row}>
-              <p className={s.dept}>{item.dept}</p>
-              <p className={s.rank}>{item.rank}</p>
-              <div className={s.nameCell}>
-                <WSAvatar src={item.avatar} name={item.name} size={28} />
-                <span className={s.name}>{item.name}</span>
-              </div>
-              <p className={s.cell}>{item.email}</p>
-              <p className={s.cell}>{item.phone}</p>
-              <p className={s.cell}>{item.joinDate}</p>
+        ) : paginatedData.map((item, index) => (
+          <WSTableRow key={index} gridTemplate={GRID_TEMPLATE}>
+            <p className={s.dept}>{item.departmentName ? item.departmentName : '-'}</p>
+            <p className={s.rank}>{item.jobGrade? item.jobGrade : '-'}</p>
+            <div className={s.nameCell}>
+              <WSAvatar src={item.profileImage} name={item.name} size={28} />
+              <span className={s.name}>{item.name? item.name : '-'}</span>
             </div>
-          ))
-        )}
+            <p className={s.cell}>{item.email? item.email : '-'}</p>
+            <p className={s.cell}>{item.phone? item.phone : '-'}</p>
+            <p className={s.cell}>{item.hireDate? item.hireDate : '-'}</p>
+          </WSTableRow>
+        ))}
       </div>
 
       <div className={s.pagination}>
@@ -128,8 +135,8 @@ export default function Organization() {
 
             <div className={s.deptList}>
               {departments.map((dept) => (
-                <button key={dept} className={s.deptItem}>
-                  <span>{dept}</span>
+                <button key={dept.id} className={s.deptItem}>
+                  <span>{dept.name}</span>
                   <ChevronRight size={16} className={s.deptChevron} />
                 </button>
               ))}
@@ -165,10 +172,12 @@ export default function Organization() {
             disabled={!newDeptName.trim()}
             onClick={() => {
               if (newDeptName.trim()) {
-                setDepartments([...departments, newDeptName.trim()]);
-                setNewDeptName("");
-                setShowAddDeptModal(false);
-                setShowDeptModal(true);
+                CreateDepartments(accessToken, newDeptName).then(()=>{
+                  setDepartments([...departments, newDeptName.trim()]);
+                  setNewDeptName("");
+                  setShowAddDeptModal(false);
+                  setShowDeptModal(true);
+                })
               }
             }}
           />

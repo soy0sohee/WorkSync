@@ -25,7 +25,7 @@ const STATUS_OPTIONS = [
   { key: "done", label: "완료" },
 ];
 
-const TH_COL = ["상태", "작업명", "진행률(%)", "담당자", "프로젝트 기간"]
+const TH_COL = ["상태", "작업명", "진행률(%)", "담당자", "프로젝트 기간"];
 
 export default function Tasks() {
   const [search, setSearch] = useState("");

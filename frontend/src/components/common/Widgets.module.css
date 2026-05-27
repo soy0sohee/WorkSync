@@ -143,6 +143,17 @@
   color: var(--ws-text-400);
   font-size: 11px;
 }
+/* 사용자 src 없을때 */
+.avatarFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--color-primary, #6366f1);
+  color: white;
+  font-weight: 500;
+  flex-shrink: 0;
+}
 
 /* ====== Pagination ====== */
 .pagination {
