@@ -52,7 +52,7 @@ export default function EmployeeAdd() {
     phone: "",
     job_grade: "",
     role: "",
-    department_id: "",
+    department_id: 0,
   });
   const [departments, setDepartments] = useState([]);
   const [submitted, setSubmitted] = useState(false);
@@ -75,11 +75,18 @@ export default function EmployeeAdd() {
     form.name.trim().length > 0,
     form.email.trim().length > 0,
     form.password.trim().length > 0,
+    form.role.trim().length > 0,
+    form.job_grade.trim().length > 0,
+    form.department_id > 0,
   ];
 
   async function handleSubmit() {
+    console.log("전송 데이터:", JSON.stringify(form));
     try {
-      if (!isValid) return;
+      if (!isValid) {
+        alert("필수 기재란을 채워주세요.");
+        return;
+      }
       await createEmpoyee(accessToken, form);
       setSubmitted(true);
       navigate("/organization");
@@ -220,7 +227,10 @@ export default function EmployeeAdd() {
                     placeholder="부서 선택"
                     value={form.department_id}
                     onChange={(e) =>
-                      setForm((p) => ({ ...p, department_id: e.target.value }))
+                      setForm((p) => ({
+                        ...p,
+                        department_id: Number(e.target.value),
+                      }))
                     }
                     options={DEPT_OPTIONS.map((m) => ({
                       value: m.key,
