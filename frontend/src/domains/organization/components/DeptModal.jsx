@@ -153,16 +153,16 @@ export default function DeptModal({
           <WSButton
             label="삭제"
             variant="primary"
-            disabled={!editDeptId.trim()}
+            disabled={!editDeptId}
             onClick={() => {
-              if (editDeptId.trim()) {
+              if (editDeptId) {
                 deleteDepartments(accessToken, editDeptId).then((response) => {
                   // console.log("삭제콘솔: " + editDeptId);
                   // console.log("삭제콘솔: " + departments);
-                  console.log("응답:", JSON.stringify(response));
-                  console.log("현재 departments:", JSON.stringify(departments));
                   setDepartments(
-                    departments.filter((dept) => dept.id !== editDeptId),
+                    departments.filter(
+                      (dept) => dept.id !== Number(editDeptId),
+                    ),
                   );
                   setModalView("dept");
                 });

@@ -77,10 +77,7 @@ export async function deleteDepartments(accessToken, editDeptId) {
     body: JSON.stringify({ id: editDeptId }),
   })
     .then((response) => {
-      return response.json();
-    })
-    .then((json) => {
-      return json;
+      return response.ok;
     })
     .catch((error) => {
       console.log("에러발생: " + error);
@@ -94,6 +91,26 @@ export async function getEmployee(accessToken) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .then((json) => {
+      return json;
+    })
+    .catch((error) => {
+      console.log("에러발생: " + error);
+    });
+}
+
+export async function createEmpoyee(accessToken, form) {
+  return await fetch(`${BASE_URL}/employees`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(form),
   })
     .then((response) => {
       return response.json();

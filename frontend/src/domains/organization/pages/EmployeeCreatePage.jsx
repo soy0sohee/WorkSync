@@ -1,31 +1,91 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Upload, User } from "lucide-react";
-import { WSAvatar, WSButton, WSCard } from "../../../components/common/CommonWidgets";
+import useAuthContext from "../../../store/AuthContext";
+import { ArrowLeft, Upload, User, Send, Paperclip } from "lucide-react";
+import {
+  WSAvatar,
+  WSButton,
+  WSCard,
+} from "../../../components/common/CommonWidgets";
+import {
+  WSInput,
+  WSFormField,
+  WSSelect,
+  WSTextarea,
+  WSFileUploadZone,
+  WSDatepicker,
+  WSFileList,
+} from "../../../components/common/FormComponents";
 import s from "./EmployeeCreatePage.module.css";
+import {
+  getDepartments,
+  getEmployee,
+  uploadProfileImage,
+  createEmpoyee,
+  editDepartments,
+} from "../services/organizationListApi";
+
+// 직급
+const JOB_GRADE_OPTIONS = [
+  { key: "todo", label: "사원" },
+  { key: "inProgress", label: "주임" },
+  { key: "done", label: "대리" },
+  { key: "done", label: "과장" },
+  { key: "done", label: "부장" },
+  { key: "done", label: "대표" },
+];
+
+// 권한
+const ROLE_OPTIONS = [
+  { key: "todo", label: "사원" },
+  { key: "inProgress", label: "주임" },
+  { key: "done", label: "대리" },
+];
+
+// 이미지
+const MAX_SIZE_MB = 50;
+const ALLOWED_EXT = [".png", ".jpg"];
 
 export default function EmployeeAdd() {
+  const { accessToken } = useAuthContext();
   const navigate = useNavigate();
-  const [employeeId, setEmployeeId] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [joinDate, setJoinDate] = useState("");
-  const [department, setDepartment] = useState("");
-  const [rank, setRank] = useState("");
-  const [permission, setPermission] = useState("");
-  const [profileImage, setProfileImage] = useState(null);
+  const [form, setForm] = useState({
+    emp_no: "",
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    job_grade: "",
+    role: "",
+    department_id: "",
+  });
+  const [files, setFiles] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [departments, setDepartments] = useState([]);
 
-  function handleImageUpload(e) {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setProfileImage(reader.result);
-      reader.readAsDataURL(file);
-    }
-  }
+  // 부서
+  useEffect(() => {
+    if (!accessToken) return;
+    getDepartments(accessToken).then((data) => {
+      // console.log(data);
+      setDepartments(Array.isArray(data.data) ? data.data : []);
+    });
+  }, [accessToken]);
+  const DEPT_OPTIONS = departments.map((dept) => ({
+    key: dept.id,
+    label: dept.name,
+  }));
 
-  function handleSubmit() {
+  const isValid = [
+    form.emp_no.trim().length > 0,
+    form.name.trim().length > 0,
+    form.email.trim().length > 0,
+    form.password.trim().length > 0,
+  ];
+
+  async function handleSubmit() {
     navigate("/organization");
   }
 
@@ -47,57 +107,89 @@ export default function EmployeeAdd() {
             <div className={s.formGrid}>
               <div className={s.row2}>
                 <div>
-                  <label className={s.label}>사번</label>
-                  <input
-                    type="text"
-                    value={employeeId}
-                    onChange={(e) => setEmployeeId(e.target.value)}
-                    placeholder="사번 입력"
-                    className={s.input}
-                  />
+                  <WSFormField label="사번" required>
+                    <WSInput
+                      type="text"
+                      value={form.emp_no}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, emp_no: e.target.value }))
+                      }
+                      placeholder="사번 입력"
+                      className={s.input}
+                    />
+                  </WSFormField>
                 </div>
                 <div>
-                  <label className={s.label}>이름</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="이름 입력"
-                    className={s.input}
-                  />
+                  <WSFormField label="이름" required>
+                    <WSInput
+                      type="text"
+                      value={form.name}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, name: e.target.value }))
+                      }
+                      placeholder="이름 입력"
+                      className={s.input}
+                    />
+                  </WSFormField>
                 </div>
-              </div>
-
-              <div>
-                <label className={s.label}>이메일</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="이메일 입력"
-                  className={s.input}
-                />
               </div>
 
               <div className={s.row2}>
                 <div>
-                  <label className={s.label}>연락처</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="010-0000-0000"
-                    className={s.input}
-                  />
+                  <WSFormField label="이메일" required>
+                    <WSInput
+                      type="text"
+                      value={form.email}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, email: e.target.value }))
+                      }
+                      placeholder="example@gmail.com"
+                      className={s.input}
+                    />
+                  </WSFormField>
                 </div>
                 <div>
-                  <label className={s.label}>입사일</label>
-                  <input
-                    type="date"
-                    value={joinDate}
-                    onChange={(e) => setJoinDate(e.target.value)}
-                    className={s.input}
-                  />
+                  <WSFormField label="비밀번호" required>
+                    <WSInput
+                      type="text"
+                      value={form.password}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, password: e.target.value }))
+                      }
+                      placeholder="비밀번호 입력"
+                      className={s.input}
+                    />
+                  </WSFormField>
+                </div>
+              </div>
+
+              <div className={s.row2}>
+                <div>
+                  <WSFormField label="연락처" required>
+                    <WSInput
+                      type="text"
+                      value={form.password}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, password: e.target.value }))
+                      }
+                      placeholder="000-0000-0000"
+                      className={s.input}
+                    />
+                  </WSFormField>
+                </div>
+                <div>
+                  <WSFormField label="입사일" required>
+                    <WSDatepicker
+                      startValue={form.start_date}
+                      endValue={form.due_date}
+                      onStartChange={(e) =>
+                        setForm((p) => ({ ...p, start_date: e.target.value }))
+                      }
+                      onEndChange={(e) =>
+                        setForm((p) => ({ ...p, due_date: e.target.value }))
+                      }
+                    />
+                  </WSFormField>
                 </div>
               </div>
             </div>
@@ -106,82 +198,88 @@ export default function EmployeeAdd() {
           <WSCard title="조직 배정" className={s.card}>
             <div className={s.row3}>
               <div>
-                <label className={s.label}>소속 부서</label>
-                <select value={department} onChange={(e) => setDepartment(e.target.value)} className={s.select}>
-                  <option value="">선택</option>
-                  <option value="경영진">경영진</option>
-                  <option value="제품팀">제품팀</option>
-                  <option value="개발팀">개발팀</option>
-                  <option value="디자인팀">디자인팀</option>
-                </select>
+                <WSFormField label="소속 부서" required>
+                  <WSSelect
+                    placeholder="부서 선택"
+                    value={form.department_id}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, department_id: e.target.value }))
+                    }
+                    options={DEPT_OPTIONS.map((m) => ({
+                      value: m.id,
+                      label: m.label,
+                    }))}
+                  />
+                </WSFormField>
               </div>
               <div>
-                <label className={s.label}>직급</label>
-                <select value={rank} onChange={(e) => setRank(e.target.value)} className={s.select}>
-                  <option value="">선택</option>
-                  <option value="사원">사원</option>
-                  <option value="주임">주임</option>
-                  <option value="대리">대리</option>
-                  <option value="과장">과장</option>
-                  <option value="차장">차장</option>
-                  <option value="부장">부장</option>
-                  <option value="이사">이사</option>
-                </select>
+                <WSFormField label="직급" required>
+                  <WSSelect
+                    placeholder="직급 선택"
+                    value={form.job_grade}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, job_grade: e.target.value }))
+                    }
+                    options={JOB_GRADE_OPTIONS.map((m) => ({
+                      value: m.id,
+                      label: m.label,
+                    }))}
+                  />
+                </WSFormField>
               </div>
               <div>
-                <label className={s.label}>권한</label>
-                <select value={permission} onChange={(e) => setPermission(e.target.value)} className={s.select}>
-                  <option value="">선택</option>
-                  <option value="관리자">관리자</option>
-                  <option value="매니저">매니저</option>
-                  <option value="일반">일반</option>
-                </select>
+                <WSFormField label="권한" required>
+                  <WSSelect
+                    placeholder="권한 선택"
+                    value={form.role}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, role: e.target.value }))
+                    }
+                    options={JOB_GRADE_OPTIONS.map((m) => ({
+                      value: m.id,
+                      label: m.label,
+                    }))}
+                  />
+                </WSFormField>
               </div>
             </div>
           </WSCard>
         </div>
 
-        <div className={s.colSide}>
-          <WSCard title="프로필 이미지" className={s.sideCard}>
-            <div className={s.uploadWrap}>
-              <div className={`${s.imagePreview} ${profileImage ? s.imagePreviewHasImage : ""}`}>
-                {profileImage ? (
-                  <WSAvatar src={profileImage} name={name || "Profile"} size={128} />
-                ) : (
-                  <User size={48} color="#D1D5DB" />
-                )}
-              </div>
+        <div>
+          <WSCard title="프로필 이미지" className={`${s.card} ${s.colSide}`}>
+            {/* <WSFileUploadZone
+              onFilesAdded={addFiles}
+              isDragging={isDragging}
+              onDragStateChange={setIsDragging}
+              icon={<Paperclip size={28} />}
+              accept=".jpg, ,png"
+              label="파일을 드래그하거나 클릭하여 업로드"
+              helperText="JPG, PNG - 최대 50MB"
+            />
 
-              <label htmlFor="profile-upload" className={s.uploadBtn}>
-                <Upload size={16} />
-                이미지 업로드
-              </label>
-              <input
-                id="profile-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className={s.hiddenInput}
-              />
-
-              <p className={s.uploadHint}>JPG, PNG 파일 (최대 5MB)</p>
-            </div>
+            <WSFileList
+              files={files.map(({ file }) => file)}
+              onRemove={removeFiles}
+            /> */}
           </WSCard>
-        </div>
-      </div>
 
-      <div className={s.actions}>
-        <WSButton
-          label="취소하고 돌아가기"
-          variant="secondary"
-          onClick={() => navigate("/organization")}
-          className={s.cancelBtn}
-        />
-        <WSButton
-          label="직원 등록"
-          onClick={handleSubmit}
-          className={s.submitBtn}
-        />
+          <div className={s.actionsCol}>
+            <WSButton
+              label="직원 등록"
+              icon={<Send size={16} />}
+              onClick={handleSubmit}
+              disabled={!isValid}
+              className={s.submitBtn}
+            />
+            <button
+              onClick={() => navigate("/organization")}
+              className={s.cancelBtn}
+            >
+              취소하고 돌아가기
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
