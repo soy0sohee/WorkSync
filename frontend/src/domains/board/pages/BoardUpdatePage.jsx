@@ -118,11 +118,11 @@ export default function BoardNew() {
     <div className={s.root}>
       <div className={s.header}>
         <div className={s.headerLeft}>
-          <button onClick={() => navigate("/board")} className={s.backBtn}>
+          <button onClick={() => navigate("/board/:id")} className={s.backBtn}>
             <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className={s.pageTitle}>게시글 작성 등록</h1>
+            <h1 className={s.pageTitle}>게시글 수정</h1>
           </div>
         </div>
       </div>

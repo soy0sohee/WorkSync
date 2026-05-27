@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, Edit, ChevronDown } from "lucide-react";
+import { ArrowLeft, Download, Edit, ChevronDown, Pencil } from "lucide-react";
 import { BOARD_POSTS } from "../../../constants/mockData";
-import { WSCard, WSAvatar } from "../../../components/common/CommonWidgets";
+import {
+  WSCard,
+  WSAvatar,
+  WSButton,
+} from "../../../components/common/CommonWidgets";
 import s from "./BoardDetailPage.module.css";
 
 const CATEGORY_LABELS = {
@@ -36,7 +40,8 @@ export default function BoardDetail() {
     );
   }
 
-  const nextPost = postIndex < BOARD_POSTS.length - 1 ? BOARD_POSTS[postIndex + 1] : null;
+  const nextPost =
+    postIndex < BOARD_POSTS.length - 1 ? BOARD_POSTS[postIndex + 1] : null;
 
   function handleDeleteAttachment(attachmentId) {
     if (confirm("첨부파일을 삭제하시겠습니까?")) {
@@ -46,17 +51,29 @@ export default function BoardDetail() {
 
   return (
     <div className={s.root}>
-      <button onClick={() => navigate("/board")} className={s.backBtn}>
-        <ArrowLeft size={18} />
-        {CATEGORY_LABELS[post.category] || "게시판"}
-      </button>
+      <div className={s.header}>
+        <div className={s.headerLeft}>
+          <button onClick={() => navigate("/board")} className={s.backBtn}>
+            <ArrowLeft size={16} />
+          </button>
+          <div>
+            <h1 className={s.pageTitle}>
+              {CATEGORY_LABELS[post.category] || "게시판"}
+            </h1>
+          </div>
+        </div>
+      </div>
 
       <div className={s.layout}>
         <div className={s.colMain}>
           <div className={s.contentCard}>
             <h1 className={s.title}>{post.title}</h1>
             <div className={s.metaRow}>
-              <WSAvatar src={post.author.avatar} name={post.author.name} size={32} />
+              <WSAvatar
+                src={post.author.avatar}
+                name={post.author.name}
+                size={32}
+              />
               <div>
                 <span className={s.metaName}>{post.author.name}</span>
                 <span className={s.metaDate}>{post.createdAt}</span>
@@ -67,44 +84,46 @@ export default function BoardDetail() {
         </div>
 
         <div className={s.colSide}>
-          <WSCard>
-            <h3 className={s.sideTitle}>첨부 파일</h3>
-            <p className={s.sideSub}>{attachments.length}개 파일 첨부됨</p>
-
-            <div className={s.fileList}>
-              {attachments.map((file) => (
-                <div key={file.id} className={s.fileRow}>
-                  <div className={s.fileIcon}>XLSX</div>
-                  <div className={s.fileBody}>
-                    <p className={s.fileName}>{file.name}</p>
-                    <p className={s.fileSize}>{file.size}</p>
-                  </div>
-                  <button className={s.fileDl} title="다운로드">
-                    <Download size={16} />
-                  </button>
+          <WSCard title="첨부 파일" subtitle="1개 파일 업로드">
+            <div className={s.attachRow}>
+              <div className={s.attachLeft}>
+                <div className={s.attachIcon}>XLSX</div>
+                <div>
+                  <p className={s.attachName}>Q3_예산_요청.xlsx</p>
+                  <p className={s.attachSize}>1.2 MB</p>
                 </div>
-              ))}
-            </div>
-
-            <div className={s.actionsCol}>
-              <button className={s.editBtn}>
-                <Edit size={14} /> 수정
-              </button>
-              <button
-                onClick={() => {
-                  if (attachments.length > 0) handleDeleteAttachment(attachments[0].id);
-                }}
-                className={s.delBtn}
-              >
-                삭제하기
+              </div>
+              <button className={s.attachDl}>
+                <Download size={18} />
               </button>
             </div>
           </WSCard>
+
+          <div className={s.actionsCol}>
+            <WSButton
+              label="수정"
+              icon={<Pencil size={16} />}
+              variant="secondary"
+              onClick={() => navigate(`/board/edit/${id}`)}
+              className={s.draftBtn}
+            />
+            <button
+              onClick={() => {
+                if (confirm("업무를 삭제하시겠습니까?")) navigate("/boad");
+              }}
+              className={s.cancelBtn}
+            >
+              삭제하기
+            </button>
+          </div>
         </div>
       </div>
 
       {nextPost && (
-        <button onClick={() => navigate(`/board/${nextPost.id}`)} className={s.nextBtn}>
+        <button
+          onClick={() => navigate(`/board/${nextPost.id}`)}
+          className={s.nextBtn}
+        >
           <div className={s.nextLeft}>
             <span className={s.nextLabel}>다음글</span>
             <ChevronDown size={14} className={s.nextArrow} />

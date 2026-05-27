@@ -7,6 +7,7 @@ import ApprovalDetailPage from "../domains/approval/pages/ApprovalDetailPage";
 import BoardListPage from "../domains/board/pages/BoardListPage";
 import BoardCreatePage from "../domains/board/pages/BoardCreatePage";
 import BoardDetailPage from "../domains/board/pages/BoardDetailPage";
+import BoardUpdatePage from "../domains/board/pages/BoardUpdatePage";
 import OrganizationPage from "../domains/organization/pages/OrganizationPage";
 import EmployeeCreatePage from "../domains/organization/pages/EmployeeCreatePage";
 import TaskListPage from "../domains/task/pages/TaskListPage";
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
       { path: "board/free", Component: BoardListPage },
       { path: "board/qna", Component: BoardListPage },
       { path: "board/:id", Component: BoardDetailPage },
+      { path: "board/edit/:id", Component: BoardUpdatePage },
       { path: "organization", Component: OrganizationPage },
       { path: "organization/employee-add", Component: EmployeeCreatePage },
       { path: "tasks", Component: TaskListPage },

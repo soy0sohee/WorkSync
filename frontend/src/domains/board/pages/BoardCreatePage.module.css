@@ -127,24 +127,27 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 8px;
   margin-bottom: 12px;
-  border: 1px solid var(--ws-border);
-  border-radius: 8px;
-  background: #f9fafb;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ws-border-light);
   flex-wrap: wrap;
 }
 .toolbarBtn {
-  padding: 6px;
+  padding: 4px 10px;
   border-radius: 4px;
   color: var(--ws-text-500);
-  transition:
-    background 0.15s,
-    color 0.15s;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.15s;
 }
 .toolbarBtn:hover {
-  background: #e5e7eb;
-  color: var(--ws-text-700);
+  background: #f3f4f6;
+}
+.toolbarSep {
+  width: 1px;
+  height: 16px;
+  background: var(--ws-border);
+  margin: 0 4px;
 }
 
 .textarea {
