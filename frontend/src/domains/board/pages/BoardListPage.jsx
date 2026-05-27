@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { getBoards, getPosts } from "../services/boardApi";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, ChevronDown } from "lucide-react";
-import { BOARD_POSTS } from "../../../constants/mockData";
 import {
   WSCard,
   WSAvatar,
@@ -41,8 +40,9 @@ export default function Board() {
 
   // 공지사항을 상단으로
   const sortedPosts = [...filteredPosts].sort((a, b) => {
-    if (a.category === "notice" && b.category !== "notice") return -1;
-    if (a.category !== "notice" && b.category === "notice") return 1;
+    // boardName으로 수정
+    if (a.boardName === "공지사항" && b.boardName !== "공지사항") return -1;
+    if (a.boardName !== "공지사항" && b.boardName === "공지사항") return 1;
     return 0;
   });
 
@@ -53,12 +53,8 @@ export default function Board() {
   // API에서 받아온 게시판 목록
   useEffect(() => {
     const token = localStorage.getItem("refreshToken"); // 저장된 토큰 가져오기
-    console.log("토큰 : ", token);
 
     getBoards(token).then((data) => {
-      console.log("게시판 데이터 : ", data);
-      console.log("getBoards 응답 전체 : ", data);
-      console.log("data.data : ", data.data);
       if (!data) return;
 
       // API 데이터를 드롭다운 형식으로 변환
@@ -72,7 +68,6 @@ export default function Board() {
     });
 
     getPosts(2, token).then((data) => {
-      console.log("게시글 데이터 : ", data);
       if (!data) return;
 
       // 수정 필요함

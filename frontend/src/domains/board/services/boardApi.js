@@ -31,7 +31,7 @@ export async function getPosts(boardId, accessToken) {
     .then((response) => response.json())
     .then((json) => {
       console.log(json);
-      return json.data;
+      return json.data?.content ?? [];
     })
     .catch((error) => {
       console.log("에러발생: " + error);
