@@ -24,6 +24,7 @@ import {
   WSFileList,
 } from "../../../components/common/FormComponents";
 import s from "./BoardCreatePage.module.css";
+import { getCreatePosts } from "../services/boardApi";
 
 const CATEGORY_OPTIONS = [
   { value: "notice", label: "공지사항", color: "#EF4444" },
@@ -53,6 +54,7 @@ export default function BoardNew() {
   const [files, setFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [boardId, setboardId] = useState("");
   const MAX_CHARS = 3000;
 
   //파일 추가
@@ -91,10 +93,28 @@ export default function BoardNew() {
     if (e.target.files) addFiles(Array.from(e.target.files));
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!isValid) return;
-    setSubmitted(true);
-    setTimeout(() => navigate("/board"), 1800);
+
+    const accessToken = localStorage.getItem("refreshToken");
+
+    try {
+      await getCreatePosts(
+        2,
+        {
+          boardId: 2,
+          title: title,
+          content: content,
+        },
+        accessToken,
+      );
+      setSubmitted(true);
+
+      setTimeout(() => navigate("/board"), 1800);
+    } catch (err) {
+      console.error("게시글 등록 실패", err);
+      console.error("전송한 데이터", { boardId: 2, title, content });
+    }
   }
 
   if (submitted) {

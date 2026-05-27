@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getBoards } from "../services/boardApi";
+import { getBoards, getPosts } from "../services/boardApi";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, ChevronDown } from "lucide-react";
 import { BOARD_POSTS } from "../../../constants/mockData";
@@ -20,6 +20,7 @@ import s from "./BoardListPage.module.css";
 
 export default function Board() {
   const navigate = useNavigate();
+  const [posts, setPosts] = useState([]);
   const [category, setCategory] = useState("all"); // 현재 선택된 값
   const [categories, setCategories] = useState([
     // 드롭다운 목록 전체
@@ -28,8 +29,9 @@ export default function Board() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  const filteredPosts = BOARD_POSTS.filter((p) => {
-    const matchCat = category === "all" || p.category === category;
+  // 카테고리 + 검색어 적용하여 정렬
+  const filteredPosts = posts.filter((p) => {
+    const matchCat = category === "all" || p.boardType === category;
     const matchSearch =
       !search ||
       p.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -37,6 +39,7 @@ export default function Board() {
     return matchCat && matchSearch;
   });
 
+  // 공지사항을 상단으로
   const sortedPosts = [...filteredPosts].sort((a, b) => {
     if (a.category === "notice" && b.category !== "notice") return -1;
     if (a.category !== "notice" && b.category === "notice") return 1;
@@ -44,6 +47,7 @@ export default function Board() {
   });
 
   const perPage = 10;
+  // 현재 페이지 게시글만
   const pagePosts = sortedPosts.slice((page - 1) * perPage, page * perPage);
 
   // API에서 받아온 게시판 목록
@@ -53,6 +57,8 @@ export default function Board() {
 
     getBoards(token).then((data) => {
       console.log("게시판 데이터 : ", data);
+      console.log("getBoards 응답 전체 : ", data);
+      console.log("data.data : ", data.data);
       if (!data) return;
 
       // API 데이터를 드롭다운 형식으로 변환
@@ -63,6 +69,14 @@ export default function Board() {
 
       // 전체 + API 데이터 합치기
       setCategories([{ value: "all", label: "전체" }, ...apiCategories]);
+    });
+
+    getPosts(2, token).then((data) => {
+      console.log("게시글 데이터 : ", data);
+      if (!data) return;
+
+      // 수정 필요함
+      setPosts(data.content ?? []);
     });
   }, []);
 
@@ -138,14 +152,12 @@ export default function Board() {
                       {post.content.slice(0, 200)}...
                     </p>
                     <div className={s.rowMeta}>
-                      <WSAvatar
-                        src={post.author.avatar}
-                        name={post.author.name}
-                        size={20}
-                      />
-                      <span className={s.rowAuthor}>{post.author.name}</span>
+                      <WSAvatar src={null} name={post.authorName} size={20} />
+                      <span className={s.rowAuthor}>{post.authorName}</span>
                       <span className={s.rowDot}>·</span>
-                      <span className={s.rowDate}>{post.createdAt}</span>
+                      <span className={s.rowDate}>
+                        {new Date(post.createdAt).toLocaleDateString("ko-KR")}
+                      </span>
                     </div>
                   </div>
                 </div>
