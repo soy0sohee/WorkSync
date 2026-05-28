@@ -7,7 +7,7 @@ import {
   WSButton,
 } from "../../../components/common/CommonWidgets";
 import s from "./BoardDetailPage.module.css";
-import { getPostById } from "../services/boardApi";
+import { getPostById, deletePost } from "../services/boardApi";
 import useAuthContext from "../../../store/AuthContext";
 
 const MOCK_ATTACHMENTS = [
@@ -100,12 +100,16 @@ export default function BoardDetail() {
               label="수정"
               icon={<Pencil size={16} />}
               variant="secondary"
-              onClick={() => navigate(`/board/edit/${id}`)}
+              onClick={() => navigate(`/board/edit/${postId}`)}
               className={s.draftBtn}
             />
             <button
-              onClick={() => {
-                if (confirm("업무를 삭제하시겠습니까?")) navigate("/boad");
+              onClick={async () => {
+                if (confirm("게시글을 삭제하시겠습니까?")) {
+                  console.log("전달되는 accessToken:", accessToken);
+                  await deletePost(boardId, postId, accessToken);
+                  navigate("/board");
+                }
               }}
               className={s.cancelBtn}
             >

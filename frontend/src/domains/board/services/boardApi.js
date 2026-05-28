@@ -75,3 +75,48 @@ export async function getPostById(boardId, postId, accessToken) {
       console.log("에러발생: " + error);
     });
 }
+
+// 게시글 삭제
+export async function deletePost(boardId, postId, accessToken) {
+  return await fetch(`${BASE_URL}/boards/${boardId}/posts/${postId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((response) => {
+      console.log("삭제 상태코드 : ", response.status);
+      return response.json();
+    })
+    .then((json) => {
+      alert(JSON.stringify(json));
+      console.log("삭제 응답 : ", json);
+      return json;
+    })
+    .catch((error) => {
+      console.log("에러발생 : " + error);
+    });
+}
+
+// 내 정보 조회 (부서 정보 포함)
+export async function getMyInfo(accessToken) {
+  return await fetch(`${BASE_URL}/employees/me`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((response) => {
+      console.log("response 상태코드 : ", response.status);
+      return response.json();
+    })
+    .then((json) => {
+      console.log("getMyInfo 전체 응답 : ", json);
+      return json.data;
+    })
+    .catch((error) => {
+      console.log("에러발생 : " + error);
+    });
+}

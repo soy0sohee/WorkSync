@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Send } from "lucide-react";
+import { getCreatePosts, getBoards, getMyInfo } from "../services/boardApi";
 import {
   ArrowLeft,
   Bold,
@@ -24,7 +25,6 @@ import {
   WSFileList,
 } from "../../../components/common/FormComponents";
 import s from "./BoardCreatePage.module.css";
-import { getCreatePosts, getBoards } from "../services/boardApi";
 import useAuthContext from "../../../store/AuthContext";
 
 // const CATEGORY_OPTIONS = [
@@ -63,6 +63,7 @@ export default function BoardNew() {
   const [submitted, setSubmitted] = useState(false);
   const [boardId, setboardId] = useState("");
   const [boardOptions, setBoardOptions] = useState([]);
+  const [myDepartmentName, setMyDepartmentName] = useState("");
   const MAX_CHARS = 3000;
   const { accessToken } = useAuthContext();
 
@@ -120,6 +121,15 @@ export default function BoardNew() {
         }));
 
       setBoardOptions(apiCategories);
+    });
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+
+    getMyInfo(accessToken).then((data) => {
+      console.log("내 정보 : ", data);
+      setMyDepartmentName(data.departmentName);
     });
   }, [accessToken]);
 
@@ -205,6 +215,17 @@ export default function BoardNew() {
                     );
                   })}
                 </div>
+                {category === 2 && (
+                  <div>
+                    <label className={s.label}>부서명</label>
+                    <input
+                      type="text"
+                      value={myDepartmentName}
+                      readOnly
+                      className={s.input}
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
