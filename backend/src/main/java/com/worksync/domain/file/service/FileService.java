@@ -133,8 +133,7 @@ public class FileService {
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {
-            e.printStackTrace();
-            // 스토리지 삭제 실패해도 DB 삭제는 진행
+            log.error("[FileService] Storage 삭제 실패 (DB 삭제 진행): {}", e.getMessage());
         }
 
         // DB에서 파일 정보 삭제
