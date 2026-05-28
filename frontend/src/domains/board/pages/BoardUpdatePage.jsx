@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Send } from "lucide-react";
 import {
   ArrowLeft,
@@ -24,11 +24,13 @@ import {
   WSFileList,
 } from "../../../components/common/FormComponents";
 import s from "./BoardCreatePage.module.css";
+import { getMyInfo, getPostById } from "../services/boardApi";
+import useAuthContext from "../../../store/AuthContext";
 
 const CATEGORY_OPTIONS = [
   { value: "notice", label: "공지사항", color: "#EF4444" },
-  { value: "dept", label: "부서 게시판", color: "#8B5CF6" },
-  { value: "free", label: "자유 게시판", color: "#10B981" },
+  { value: "dept", label: "부서게시판", color: "#8B5CF6" },
+  { value: "free", label: "자유게시판", color: "#10B981" },
 ];
 
 const fileIconColor = {
@@ -51,8 +53,12 @@ export default function BoardNew() {
   const [category, setCategory] = useState("free");
   const [content, setContent] = useState("");
   const [files, setFiles] = useState([]);
+  const [boardName, setBoardName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { accessToken } = useAuthContext();
+  const { boardId, postId } = useParams();
+  const [myDepartmentName, setMyDepartmentName] = useState("");
   const MAX_CHARS = 3000;
 
   //파일 추가
@@ -80,6 +86,27 @@ export default function BoardNew() {
   //   }));
   //   setFiles((prev) => [...prev, ...mapped].slice(0, 10));
   // }
+  const getCategoryValue = (boardName) => {
+    const found = CATEGORY_OPTIONS.find(
+      (opt) => opt.label.replace(/\s/g, "") === boardName.replace(/\s/g, ""),
+    );
+    return found ? found.value : "free";
+  };
+
+  useEffect(() => {
+    getPostById(boardId, postId, accessToken).then((data) => {
+      console.log("카테고리 세팅값:", getCategoryValue(data.boardName));
+      setTitle(data.title);
+      setContent(data.content);
+      setCategory(getCategoryValue(data.boardName));
+    });
+
+    // 내 정보 조회(부서명 세팅)
+    getMyInfo(accessToken).then((data) => {
+      console.log("부서명:", data.departmentName);
+      setMyDepartmentName(data.departmentName);
+    });
+  }, []);
 
   function handleFileDrop(e) {
     e.preventDefault();
@@ -118,7 +145,7 @@ export default function BoardNew() {
     <div className={s.root}>
       <div className={s.header}>
         <div className={s.headerLeft}>
-          <button onClick={() => navigate("/board/:id")} className={s.backBtn}>
+          <button onClick={() => navigate("/board")} className={s.backBtn}>
             <ArrowLeft size={16} />
           </button>
           <div>
@@ -156,6 +183,17 @@ export default function BoardNew() {
                     );
                   })}
                 </div>
+                {category === "dept" && (
+                  <div>
+                    <label className={s.label}>부서명</label>
+                    <input
+                      type="text"
+                      value={myDepartmentName}
+                      readOnly
+                      className={s.input}
+                    />
+                  </div>
+                )}
               </div>
 
               <div>

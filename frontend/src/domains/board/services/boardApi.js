@@ -90,7 +90,6 @@ export async function deletePost(boardId, postId, accessToken) {
       return response.json();
     })
     .then((json) => {
-      alert(JSON.stringify(json));
       console.log("삭제 응답 : ", json);
       return json;
     })
@@ -115,6 +114,10 @@ export async function getMyInfo(accessToken) {
     .then((json) => {
       console.log("getMyInfo 전체 응답 : ", json);
       return json.data;
+    })
+    .then((data) => {
+      console.log("내 정보 : ", data);
+      return data;
     })
     .catch((error) => {
       console.log("에러발생 : " + error);

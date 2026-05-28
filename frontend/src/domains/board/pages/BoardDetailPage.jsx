@@ -7,7 +7,7 @@ import {
   WSButton,
 } from "../../../components/common/CommonWidgets";
 import s from "./BoardDetailPage.module.css";
-import { getPostById, deletePost } from "../services/boardApi";
+import { getPostById, deletePost, getMyInfo } from "../services/boardApi";
 import useAuthContext from "../../../store/AuthContext";
 
 const MOCK_ATTACHMENTS = [
@@ -19,12 +19,18 @@ export default function BoardDetail() {
   const { boardId, postId } = useParams();
   const navigate = useNavigate();
   const [post, setPost] = useState(null);
+  const [me, setMe] = useState(null);
   const [attachments, setAttachments] = useState(MOCK_ATTACHMENTS);
 
   useEffect(() => {
     if (!accessToken) return;
     getPostById(boardId, postId, accessToken).then((data) => {
       setPost(data);
+      console.log("게시글 데이터 : ", data);
+    });
+
+    getMyInfo(accessToken).then((data) => {
+      setMe(data);
     });
   }, [boardId, postId, accessToken]);
 
@@ -94,28 +100,31 @@ export default function BoardDetail() {
               </button>
             </div>
           </WSCard>
-
-          <div className={s.actionsCol}>
-            <WSButton
-              label="수정"
-              icon={<Pencil size={16} />}
-              variant="secondary"
-              onClick={() => navigate(`/board/edit/${postId}`)}
-              className={s.draftBtn}
-            />
-            <button
-              onClick={async () => {
-                if (confirm("게시글을 삭제하시겠습니까?")) {
-                  console.log("전달되는 accessToken:", accessToken);
-                  await deletePost(boardId, postId, accessToken);
-                  navigate("/board");
-                }
-              }}
-              className={s.cancelBtn}
-            >
-              삭제하기
-            </button>
-          </div>
+          {me && post && me.id === post.authorId && (
+            <>
+              <div className={s.actionsCol}>
+                <WSButton
+                  label="수정"
+                  icon={<Pencil size={16} />}
+                  variant="secondary"
+                  onClick={() => navigate(`/board/edit/${boardId}/${postId}`)}
+                  className={s.draftBtn}
+                />
+                <button
+                  onClick={async () => {
+                    if (confirm("게시글을 삭제하시겠습니까?")) {
+                      console.log("전달되는 accessToken:", accessToken);
+                      await deletePost(boardId, postId, accessToken);
+                      navigate("/board");
+                    }
+                  }}
+                  className={s.cancelBtn}
+                >
+                  삭제하기
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

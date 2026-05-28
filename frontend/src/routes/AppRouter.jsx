@@ -56,7 +56,7 @@ export const router = createBrowserRouter([
       { path: "board/free", Component: BoardListPage },
       { path: "board/qna", Component: BoardListPage },
       { path: "board/:boardId/:postId", Component: BoardDetailPage },
-      { path: "board/edit/:id", Component: BoardUpdatePage },
+      { path: "board/edit/:boardId/:postId", Component: BoardUpdatePage },
       { path: "organization", Component: OrganizationPage },
       { path: "organization/employee-add", Component: EmployeeCreatePage },
       { path: "tasks", Component: TaskListPage },
