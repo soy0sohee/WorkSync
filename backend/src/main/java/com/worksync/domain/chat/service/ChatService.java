@@ -6,6 +6,7 @@ import com.worksync.domain.chat.repository.ChatMemberRepository;
 import com.worksync.domain.chat.repository.ChatRoomRepository;
 import com.worksync.domain.chat.repository.MessageRepository;
 import com.worksync.domain.employee.entity.Employee;
+import com.worksync.domain.employee.entity.EmployeeStatus;
 import com.worksync.domain.employee.repository.EmployeeRepository;
 import com.worksync.domain.notification.entity.NotificationType;
 import com.worksync.domain.notification.service.NotificationService;
@@ -126,6 +127,7 @@ public class ChatService {
         String name;
         String thumbnailImage = null;
 
+        EmployeeStatus otherStatus = null;
         if (room.getRoomType() == RoomType.DIRECT) {
             ChatMember other = room.getMembers().stream()
                     .filter(m -> !m.getEmployee().getId().equals(myId))
@@ -133,6 +135,7 @@ public class ChatService {
                     .orElse(null);
             name = other != null ? other.getEmployee().getName() : "알 수 없음";
             thumbnailImage = other != null ? other.getEmployee().getProfileImage() : null;
+            otherStatus = other != null ? other.getEmployee().getStatus() : null;
         } else {
             name = room.getName();
         }
@@ -168,6 +171,7 @@ public class ChatService {
                 .lastMessage(lastMessage)
                 .lastMessageAt(room.getLastMessageAt())
                 .unreadCount((int) unreadCount)
+                .otherStatus(otherStatus)
                 .build();
     }
 

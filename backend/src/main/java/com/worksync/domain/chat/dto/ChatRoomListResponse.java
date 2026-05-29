@@ -1,6 +1,7 @@
 package com.worksync.domain.chat.dto;
 
 import com.worksync.domain.chat.entity.RoomType;
+import com.worksync.domain.employee.entity.EmployeeStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -16,4 +17,5 @@ public class ChatRoomListResponse {
     private String lastMessage;
     private LocalDateTime lastMessageAt;
     private int unreadCount;
+    private EmployeeStatus otherStatus;
 }
