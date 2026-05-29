@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 20px 20px 12px 20px;
   border-bottom: 1px solid var(--ws-border-light);
 }
 .cardTitle {
@@ -47,6 +47,7 @@
   border-radius: 8px;
   background: var(--stat-bg);
   display: flex;
+  margin-bottom: 5px;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
@@ -142,6 +143,17 @@
   color: var(--ws-text-400);
   font-size: 11px;
 }
+/* 사용자 src 없을때 */
+.avatarFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--color-primary, #6366f1);
+  color: white;
+  font-weight: 500;
+  flex-shrink: 0;
+}
 
 /* ====== Pagination ====== */
 .pagination {
@@ -227,7 +239,7 @@
 }
 .searchInputField {
   width: 100%;
-  padding: 8px 36px 8px 36px;
+  padding: 12px 36px 10px 36px;
   border: 1px solid var(--ws-border);
   background: #fff;
   color: var(--ws-text-800);
@@ -250,7 +262,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 13px 12px;
   border: 1px solid var(--ws-border);
   background: #fff;
   border-radius: 8px;
@@ -382,7 +394,7 @@
   font-size: 13px;
 }
 .btnSizeSm {
-  padding: 6px 12px;
+  padding: 6px 12px 9px 12px;
   font-size: 12px;
 }
 .btnPrimary {
@@ -673,9 +685,10 @@
 .searchInputCompactClear:hover {
   color: var(--ws-text-600);
 }
+/* NavBar 검색어 입력 input */
 .searchInputCompactField {
-  width: 100%;
-  padding: 8px 36px 8px 40px;
+  width: 300px;
+  padding: 10px 36px 10px 40px;
   border: 1px solid var(--ws-border);
   border-radius: 8px;
   background: #fff;
@@ -695,6 +708,7 @@
 .filterDD {
   position: relative;
 }
+/* NavBar 드롭다운 */
 .filterDDBtn {
   display: flex;
   align-items: center;
@@ -1020,11 +1034,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
+
   margin-bottom: 24px;
 }
 .filterBarSearch {
   flex: 1;
+  height: 36px;
 }
+/* NavBar 버튼 */
 .filterBarAction {
   display: flex;
   align-items: center;
@@ -1046,6 +1063,7 @@
 }
 .filterBarActionSecondary {
   background: transparent;
+
   color: var(--ws-text-700);
   border: 1px solid var(--ws-border);
 }
@@ -1123,22 +1141,47 @@
 }
 
 .attachRow {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 16px;
-  background: #F9FAFB;
+  background: #f9fafb;
   border: 1px solid var(--ws-border);
   border-radius: 8px;
   margin-top: 10px;
 }
-.attachLeft { display: flex; align-items: center; gap: 12px; }
-.attachIcon {
-  width: 40px; height: 40px;
-  border-radius: 8px;
-  background: #10B981;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 11px; font-weight: 700;
+.attachLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.attachName { color: var(--ws-text-800); font-size: 13px; font-weight: 600; margin: 0; }
-.attachSize { color: var(--ws-text-500); font-size: 11.5px; margin: 0; }
-.attachDl { color: var(--ws-text-400); transition: color 0.15s; }
-.attachDl:hover { color: var(--ws-text-600); }
+.attachIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+.attachName {
+  color: var(--ws-text-800);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+.attachSize {
+  color: var(--ws-text-500);
+  font-size: 11.5px;
+  margin: 0;
+}
+.attachDl {
+  color: var(--ws-text-400);
+  transition: color 0.15s;
+}
+.attachDl:hover {
+  color: var(--ws-text-600);
+}

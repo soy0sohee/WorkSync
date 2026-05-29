@@ -31,6 +31,7 @@ export default function Tasks() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const { accessToken } = useAuthContext();
   const navigate = useNavigate();
 
   const allTasks = [
