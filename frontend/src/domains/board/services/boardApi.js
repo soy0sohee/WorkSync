@@ -57,6 +57,26 @@ export async function getCreatePosts(boardId, data, accessToken) {
     });
 }
 
+// 게시글 업데이트
+export async function getUpdatePosts(boardId, postId, data, accessToken) {
+  return await fetch(`${BASE_URL}/boards/${boardId}/posts/${postId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+  })
+    .then((response) => response.json())
+    .then((json) => {
+      console.log(json);
+      return json.data;
+    })
+    .catch((error) => {
+      console.log("에러발생 : " + error);
+    });
+}
+
 //게시글 상세 조회
 export async function getPostById(boardId, postId, accessToken) {
   return await fetch(`${BASE_URL}/boards/${boardId}/posts/${postId}`, {

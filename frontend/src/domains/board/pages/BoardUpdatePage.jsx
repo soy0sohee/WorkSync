@@ -1,30 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Send } from "lucide-react";
-import {
-  ArrowLeft,
-  Bold,
-  Italic,
-  Underline,
-  List,
-  Link,
-  AlignLeft,
-  Paperclip,
-  CheckCircle,
-  Image,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, Paperclip, CheckCircle } from "lucide-react";
 import { WSCard, WSButton } from "../../../components/common/CommonWidgets";
 import {
-  WSInput,
-  WSSelect,
-  WSTextarea,
   WSFileUploadZone,
-  WSCalendarpicker,
   WSFileList,
 } from "../../../components/common/FormComponents";
 import s from "./BoardCreatePage.module.css";
-import { getMyInfo, getPostById } from "../services/boardApi";
+import { getMyInfo, getPostById, getUpdatePosts } from "../services/boardApi";
 import useAuthContext from "../../../store/AuthContext";
 
 const CATEGORY_OPTIONS = [
@@ -47,13 +31,10 @@ const TOOLBAR_ITEMS = ["굵게", "기울임", "밑줄", "목록"];
 
 export default function BoardNew() {
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
-
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("free");
   const [content, setContent] = useState("");
   const [files, setFiles] = useState([]);
-  const [boardName, setBoardName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { accessToken } = useAuthContext();
@@ -74,18 +55,6 @@ export default function BoardNew() {
   const isValid =
     title.trim().length > 0 && category !== "" && content.trim().length > 0;
 
-  // function addFiles(newFiles) {
-  //   const mapped = newFiles.map((f, i) => ({
-  //     id: `file-${Date.now()}-${i}`,
-  //     name: f.name,
-  //     size:
-  //       f.size > 1024 * 1024
-  //         ? `${(f.size / 1024 / 1024).toFixed(1)} MB`
-  //         : `${(f.size / 1024).toFixed(0)} KB`,
-  //     type: f.name.split(".").pop()?.toUpperCase() || "FILE",
-  //   }));
-  //   setFiles((prev) => [...prev, ...mapped].slice(0, 10));
-  // }
   const getCategoryValue = (boardName) => {
     const found = CATEGORY_OPTIONS.find(
       (opt) => opt.label.replace(/\s/g, "") === boardName.replace(/\s/g, ""),
@@ -95,18 +64,15 @@ export default function BoardNew() {
 
   useEffect(() => {
     getPostById(boardId, postId, accessToken).then((data) => {
-      console.log("카테고리 세팅값:", getCategoryValue(data.boardName));
       setTitle(data.title);
       setContent(data.content);
       setCategory(getCategoryValue(data.boardName));
     });
-
     // 내 정보 조회(부서명 세팅)
     getMyInfo(accessToken).then((data) => {
-      console.log("부서명:", data.departmentName);
       setMyDepartmentName(data.departmentName);
     });
-  }, []);
+  }, [boardId, postId, accessToken]);
 
   function handleFileDrop(e) {
     e.preventDefault();
@@ -118,10 +84,25 @@ export default function BoardNew() {
     if (e.target.files) addFiles(Array.from(e.target.files));
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    if (!accessToken) return;
+
     if (!isValid) return;
-    setSubmitted(true);
-    setTimeout(() => navigate("/board"), 1800);
+    try {
+      await getUpdatePosts(
+        boardId,
+        postId,
+        {
+          title: title,
+          content: content,
+        },
+        accessToken,
+      );
+      setSubmitted(true);
+      setTimeout(() => navigate("/board"), 1800);
+    } catch (err) {
+      console.error("게시글 업데이트 실패", err);
+    }
   }
 
   if (submitted) {
@@ -132,7 +113,7 @@ export default function BoardNew() {
             <CheckCircle size={40} className={s.successIconGlyph} />
           </div>
           <div className={s.successCopy}>
-            <p className={s.successTitle}>게시글이 등록되었습니다</p>
+            <p className={s.successTitle}>게시글이 수정되었습니다</p>
             <p className={s.successDesc}>게시판으로 이동합니다...</p>
           </div>
           <div className={s.successBadge}>게시판으로 이동 중...</div>
@@ -267,7 +248,7 @@ export default function BoardNew() {
 
           <div className={s.actionsCol}>
             <WSButton
-              label="작업 등록"
+              label="수정하기"
               icon={<Send size={16} />}
               onClick={handleSubmit}
               disabled={!isValid}

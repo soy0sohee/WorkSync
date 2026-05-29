@@ -32,13 +32,6 @@ export default function Board() {
 
   // 카테고리 + 검색어 적용하여 정렬
   const filteredPosts = posts.filter((p) => {
-    console.log("현재 category : ", category);
-    console.log(
-      "posts[0] boardId : ",
-      posts[0]?.boardId,
-      typeof posts[0]?.boardId,
-    );
-
     const matchCat = category === "all" || p.boardId === category;
     const matchSearch =
       !search ||
@@ -93,7 +86,6 @@ export default function Board() {
       });
     } else {
       getPosts(boardId, accessToken).then((data) => {
-        console.log("게시글 데이터 확인 : ", data[0]);
         if (!data) return;
         setPosts(data);
       });
@@ -155,7 +147,8 @@ export default function Board() {
         ) : (
           <div className={s.list}>
             {pagePosts.map((post) => {
-              const isNotice = post.category === "notice";
+              console.log(post);
+              const isNotice = post.boardName === "공지사항";
               return (
                 <div
                   key={post.id}
@@ -170,9 +163,7 @@ export default function Board() {
                       <p className={s.rowTitle}>{post.title}</p>
                     </div>
 
-                    <p className={s.rowContent}>
-                      {post.content.slice(0, 200)}...
-                    </p>
+                    <p className={s.rowContent}>{post.content.slice(0, 200)}</p>
                     <div className={s.rowMeta}>
                       <WSAvatar src={null} name={post.authorName} size={20} />
                       <span className={s.rowAuthor}>{post.authorName}</span>

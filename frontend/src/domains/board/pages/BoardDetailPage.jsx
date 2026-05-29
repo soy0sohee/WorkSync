@@ -7,7 +7,12 @@ import {
   WSButton,
 } from "../../../components/common/CommonWidgets";
 import s from "./BoardDetailPage.module.css";
-import { getPostById, deletePost, getMyInfo } from "../services/boardApi";
+import {
+  getPostById,
+  deletePost,
+  getMyInfo,
+  getPosts,
+} from "../services/boardApi";
 import useAuthContext from "../../../store/AuthContext";
 
 const MOCK_ATTACHMENTS = [
@@ -17,26 +22,34 @@ const MOCK_ATTACHMENTS = [
 export default function BoardDetail() {
   const { accessToken } = useAuthContext();
   const { boardId, postId } = useParams();
+  const [allPosts, setAllPosts] = useState([]);
   const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [me, setMe] = useState(null);
   const [attachments, setAttachments] = useState(MOCK_ATTACHMENTS);
+  // 현재 글의 위치 찾기
+  const postIndex = allPosts.findIndex((p) => p.id === Number(postId));
+  // 이전글
+  const prevPost = postIndex > 0 ? allPosts[postIndex - 1] : null;
+  // 다음글
+  const nextPost =
+    postIndex < allPosts.length - 1 ? allPosts[postIndex + 1] : null;
 
   useEffect(() => {
     if (!accessToken) return;
+    // 게시글 하나
     getPostById(boardId, postId, accessToken).then((data) => {
       setPost(data);
-      console.log("게시글 데이터 : ", data);
     });
-
+    // 게시글 전체 목록
+    getPosts(boardId, accessToken).then((data) => {
+      setAllPosts(data);
+    });
+    // 내 정보
     getMyInfo(accessToken).then((data) => {
       setMe(data);
     });
   }, [boardId, postId, accessToken]);
-
-  // 다음 글
-  // const nextPost =
-  //   postIndex < BOARD_POSTS.length - 1 ? BOARD_POSTS[postIndex + 1] : null;
 
   if (!post) {
     return (
@@ -48,11 +61,6 @@ export default function BoardDetail() {
         </button>
       </div>
     );
-  }
-  function handleDeleteAttachment(attachmentId) {
-    if (confirm("첨부파일을 삭제하시겠습니까?")) {
-      setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
-    }
   }
 
   return (
@@ -113,7 +121,6 @@ export default function BoardDetail() {
                 <button
                   onClick={async () => {
                     if (confirm("게시글을 삭제하시겠습니까?")) {
-                      console.log("전달되는 accessToken:", accessToken);
                       await deletePost(boardId, postId, accessToken);
                       navigate("/board");
                     }
@@ -128,10 +135,9 @@ export default function BoardDetail() {
         </div>
       </div>
 
-      {/* 다음 글 */}
-      {/* {nextPost && (
+      {nextPost && (
         <button
-          onClick={() => navigate(`/board/${nextPost.id}`)}
+          onClick={() => navigate(`/board/${boardId}/${nextPost.id}`)}
           className={s.nextBtn}
         >
           <div className={s.nextLeft}>
@@ -139,9 +145,26 @@ export default function BoardDetail() {
             <ChevronDown size={14} className={s.nextArrow} />
             <span className={s.nextTitle}>{nextPost.title}</span>
           </div>
-          <span className={s.nextDate}>{nextPost.createdAt}</span>
+          <span className={s.nextDate}>
+            {new Date(nextPost.createdAt).toLocaleDateString("ko-KR")}
+          </span>
         </button>
-      )} */}
+      )}
+      {prevPost && (
+        <button
+          onClick={() => navigate(`/board/${boardId}/${prevPost.id}`)}
+          className={s.nextBtn}
+        >
+          <div className={s.nextLeft}>
+            <span className={s.nextLabel}>이전글</span>
+            <ChevronDown size={14} className={s.nextArrow} />
+            <span className={s.nextTitle}>{prevPost.title}</span>
+          </div>
+          <span className={s.nextDate}>
+            {new Date(prevPost.createdAt).toLocaleDateString("ko-KR")}
+          </span>
+        </button>
+      )}
     </div>
   );
 }

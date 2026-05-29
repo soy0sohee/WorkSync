@@ -2,36 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Send } from "lucide-react";
 import { getCreatePosts, getBoards, getMyInfo } from "../services/boardApi";
-import {
-  ArrowLeft,
-  Bold,
-  Italic,
-  Underline,
-  List,
-  Link,
-  AlignLeft,
-  Paperclip,
-  CheckCircle,
-  Image,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, Paperclip, CheckCircle } from "lucide-react";
 import { WSCard, WSButton } from "../../../components/common/CommonWidgets";
 import {
-  WSInput,
-  WSSelect,
-  WSTextarea,
   WSFileUploadZone,
-  WSCalendarpicker,
   WSFileList,
 } from "../../../components/common/FormComponents";
 import s from "./BoardCreatePage.module.css";
 import useAuthContext from "../../../store/AuthContext";
-
-// const CATEGORY_OPTIONS = [
-//   { value: "notice", label: "공지사항", color: "#EF4444" },
-//   { value: "dept", label: "부서 게시판", color: "#8B5CF6" },
-//   { value: "free", label: "자유 게시판", color: "#10B981" },
-// ];
 
 const BOARD_COLORS = {
   1: "#EF4444", // 공지사항 - 빨강
@@ -54,11 +32,11 @@ const TOOLBAR_ITEMS = ["굵게", "기울임", "밑줄", "목록"];
 export default function BoardNew() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("free");
+  const [category, setCategory] = useState("");
   const [content, setContent] = useState("");
   const [files, setFiles] = useState([]);
+  const [role, setRole] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [boardId, setboardId] = useState("");
@@ -80,19 +58,6 @@ export default function BoardNew() {
   const isValid =
     title.trim().length > 0 && category !== "" && content.trim().length > 0;
 
-  // function addFiles(newFiles) {
-  //   const mapped = newFiles.map((f, i) => ({
-  //     id: `file-${Date.now()}-${i}`,
-  //     name: f.name,
-  //     size:
-  //       f.size > 1024 * 1024
-  //         ? `${(f.size / 1024 / 1024).toFixed(1)} MB`
-  //         : `${(f.size / 1024).toFixed(0)} KB`,
-  //     type: f.name.split(".").pop()?.toUpperCase() || "FILE",
-  //   }));
-  //   setFiles((prev) => [...prev, ...mapped].slice(0, 10));
-  // }
-
   function handleFileDrop(e) {
     e.preventDefault();
     setIsDragging(false);
@@ -103,39 +68,8 @@ export default function BoardNew() {
     if (e.target.files) addFiles(Array.from(e.target.files));
   }
 
-  // API에서 받아온 게시판 목록(드롭다운)
-  useEffect(() => {
-    if (!accessToken) return;
-
-    getBoards(accessToken).then((data) => {
-      console.log("게시판 데이터 : ", data);
-      if (!data) return;
-
-      // API 데이터를 드롭다운 형식으로 변환
-      const apiCategories = data
-        .sort((a, b) => a.id - b.id) // boardId 순으로 드롭다운 정렬
-        .map((board) => ({
-          value: board.id, // 1, 2, 3
-          label: board.name, //"공지사항", "부서게시판", "자유게시판"
-          color: BOARD_COLORS[board.id],
-        }));
-
-      setBoardOptions(apiCategories);
-    });
-  }, [accessToken]);
-
-  useEffect(() => {
-    if (!accessToken) return;
-
-    getMyInfo(accessToken).then((data) => {
-      console.log("내 정보 : ", data);
-      setMyDepartmentName(data.departmentName);
-    });
-  }, [accessToken]);
-
   async function handleSubmit() {
     if (!accessToken) return;
-
     if (!isValid) return;
 
     try {
@@ -155,6 +89,36 @@ export default function BoardNew() {
       console.error("게시글 등록 실패", err);
     }
   }
+
+  // API에서 받아온 게시판 목록(드롭다운)
+  useEffect(() => {
+    if (!accessToken) return;
+
+    getBoards(accessToken).then((data) => {
+      if (!data) return;
+
+      // API 데이터를 드롭다운 형식으로 변환
+      const apiCategories = data
+        .sort((a, b) => a.id - b.id) // boardId 순으로 드롭다운 정렬
+        .map((board) => ({
+          value: board.id, // 1, 2, 3
+          label: board.name, //"공지사항", "부서게시판", "자유게시판"
+          color: BOARD_COLORS[board.id],
+        }));
+
+      setBoardOptions(apiCategories);
+    });
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+
+    getMyInfo(accessToken).then((data) => {
+      console.log("내 정보 전체", data);
+      setMyDepartmentName(data.departmentName);
+      setRole(data.role);
+    });
+  }, [accessToken]);
 
   if (submitted) {
     return (
@@ -200,10 +164,12 @@ export default function BoardNew() {
                 <div className={s.catRow}>
                   {boardOptions.map((opt) => {
                     const active = category === opt.value;
+                    const isNoticeOption = opt.label === "공지사항";
+                    const isDisabled = isNoticeOption && role !== "ADMIN";
                     return (
                       <button
                         key={opt.value}
-                        onClick={() => setCategory(opt.value)}
+                        onClick={() => !isDisabled && setCategory(opt.value)}
                         className={`${s.catBtn} ${active ? s.catBtnActive : ""}`}
                         style={{
                           "--cat-color": opt.color,
