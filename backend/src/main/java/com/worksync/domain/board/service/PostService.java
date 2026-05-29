@@ -28,14 +28,28 @@ public class PostService {
 
     //게시글 목록 조회(페이징+제목검색)
     @Transactional(readOnly = true)
-    public Page<PostResponse>getPosts(Long boardId, String keyword, Pageable pageable){
+    public Page<PostResponse> getPosts(Long boardId, String keyword, Pageable pageable) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BOARD_NOT_FOUND));
+
         Page<Post> posts;
-        if (keyword != null) {
-            posts=postRepository.findByBoardIdAndTitleContaining(boardId,keyword,pageable);
+
+        // 부서게시판이면 해당 부서 작성자 글만 반환
+        if (board.getBoardType() == BoardType.DEPARTMENT && board.getDepartment() != null) {
+            Long departmentId = board.getDepartment().getId();
+            if (keyword != null) {
+                posts = postRepository.findByBoardIdAndTitleContainingAndAuthorDepartmentId(boardId, keyword, departmentId, pageable);
+            } else {
+                posts = postRepository.findByBoardIdAndAuthorDepartmentId(boardId, departmentId, pageable);
+            }
+        } else {
+            if (keyword != null) {
+                posts = postRepository.findByBoardIdAndTitleContaining(boardId, keyword, pageable);
+            } else {
+                posts = postRepository.findByBoardId(boardId, pageable);
+            }
         }
-        else {
-            posts=postRepository.findByBoardId(boardId,pageable);
-        }
+
         return posts.map(PostResponse::from);
     }
 
