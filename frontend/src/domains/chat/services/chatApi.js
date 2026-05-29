@@ -1,0 +1,116 @@
+const BASE_URL = "http://localhost:8080/api";
+
+export async function getChatRoom(accessToken) {
+  return await fetch(`${BASE_URL}/chat/rooms`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .then((json) => {
+      return json;
+    })
+    .catch((error) => {
+      console.log("에러발생: " + error);
+    });
+}
+
+export async function getEmployee(accessToken) {
+  return await fetch(`${BASE_URL}/employees`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .then((json) => {
+      return json;
+    })
+    .catch((error) => {
+      console.log("에러발생: " + error);
+    });
+}
+
+export async function createChatRoom(accessToken, data) {
+  return await fetch(`${BASE_URL}/chat/rooms`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .then((json) => {
+      return json;
+    })
+    .catch((error) => {
+      console.log("에러발생: " + error);
+    });
+}
+
+export async function getMember(accessToken, roomId) {
+  return await fetch(`${BASE_URL}/chat/rooms/${roomId}/members`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .then((json) => {
+      return json;
+    })
+    .catch((error) => {
+      console.log("에러발생: " + error);
+    });
+}
+
+export async function getMessages(accessToken, roomId) {
+  return await fetch(`${BASE_URL}/chat/rooms/${roomId}/messages`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .then((json) => {
+      return json;
+    })
+    .catch((error) => {
+      console.log("에러발생: " + error);
+    });
+}
+
+export async function getMyInfo(accessToken) {
+  return await fetch(`${BASE_URL}/employees/me`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .then((json) => {
+      return json;
+    })
+    .catch((error) => {
+      console.log("에러발생: " + error);
+    });
+}

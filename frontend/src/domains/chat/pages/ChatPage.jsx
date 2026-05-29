@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import useAuthContext from "../../../store/AuthContext";
 import {
   Search,
   Send,
@@ -11,88 +12,48 @@ import {
   MessageSquare,
   Download,
 } from "lucide-react";
-import { TEAM_MEMBERS, MESSAGES } from "../../../constants/mockData";
+import { WSAvatar } from "../../../components/common/CommonWidgets";
+import { WSEmptyState } from "../../../components/common/LayoutComponents";
+import {
+  getChatRoom,
+  getEmployee,
+  createChatRoom,
+  getMember,
+  getMessages,
+  getMyInfo,
+} from "../services/chatApi";
 import s from "./ChatPage.module.css";
 
-const CONVERSATIONS = [
-  {
-    id: 1,
-    type: "direct",
-    member: TEAM_MEMBERS[1],
-    lastMessage: "응, 오후 3시로 하자. 캘린더 초대 보낼게.",
-    time: "오전 10:39",
-    unread: 2,
-    pinned: true,
-  },
-  {
-    id: 2,
-    type: "direct",
-    member: TEAM_MEMBERS[2],
-    lastMessage: "API 엔드포인트 테스트 준비 완료.",
-    time: "오전 9:15",
-    unread: 0,
-    pinned: false,
-  },
-  {
-    id: 3,
-    type: "group",
-    name: "🚀 스프린트 7 팀",
-    avatar: null,
-    members: TEAM_MEMBERS.slice(0, 4),
-    lastMessage: "James: 대시보드 재디자인 수고했어요!",
-    time: "어제",
-    unread: 5,
-    pinned: true,
-  },
-  {
-    id: 4,
-    type: "direct",
-    member: TEAM_MEMBERS[4],
-    lastMessage: "디자인 스펙 보냈어.",
-    time: "어제",
-    unread: 0,
-    pinned: false,
-  },
-  {
-    id: 5,
-    type: "group",
-    name: "# 일반",
-    avatar: null,
-    members: TEAM_MEMBERS,
-    lastMessage: "Aisha: 오늘 오후 4시 회고 잊지 마세요!",
-    time: "7월 10일",
-    unread: 0,
-    pinned: false,
-  },
-  {
-    id: 6,
-    type: "direct",
-    member: TEAM_MEMBERS[0],
-    lastMessage: "3분기 예산 문서 검토 부탁드립니다.",
-    time: "7월 9일",
-    unread: 0,
-    pinned: false,
-  },
-];
+// 직급
+const JOB_GRADE = {
+  STAFF: "사원",
+  SENIOR: "주임",
+  ASSISTANT_MANAGER: "대리",
+  MANAGER: "과장",
+  GENERAL_MANAGER: "부장",
+  DIRECTOR: "이사",
+  CEO: "대표",
+};
+
 // 파일명에서 확장자 추출 - "report.pdf" -> "pdf"
-function getExt(filename) {
-  return filename.split(".").pop().toLowerCase();
-}
+// function getExt(filename) {
+//   return filename.split(".").pop().toLowerCase();
+// }
 
 // 바이트 단위 파일 크기를 읽기 좋게 변환 - 1048576 -> "1.0MB"
-function formatSize(bytes) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+// function formatSize(bytes) {
+//   if (bytes < 1024) return `${bytes} B`;
+//   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+//   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+// }
 
 // 현재 시각을 "오전 9:05" 형식으로 반환 - 메세지 전송 시각 표시용
-function nowTime() {
-  const d = new Date();
-  const h = d.getHours();
-  const m = String(d.getMinutes()).padStart(2, "0");
-  return h < 12 ? `오전 ${h}: ${m}` : ` 오후 ${h - 12 || 12}:${m}`;
-}
+// function nowTime() {
+//   const d = new Date();
+//   const h = d.getHours();
+//   const m = String(d.getMinutes()).padStart(2, "0");
+//   return h < 12 ? `오전 ${h}: ${m}` : ` 오후 ${h - 12 || 12}:${m}`;
+// }
 
 // 하드코딩 더미 데이터라 실제 업로드와 연동 안됨
 // const FILE_ATTACHMENTS = [
@@ -103,38 +64,40 @@ function nowTime() {
 
 // PDF / 워드 / 엑셀 / PPT / PNG
 // 확장자별 색상과 라벨 정의 - 파일 아이콘 뱃지에 사용
-const EXT_MAP = {
-  pdf: { color: "#F40F02", label: "PDF" },
-  xlsx: { color: "#217346", label: "XLS" },
-  xls: { color: "#217346", label: "XLS" },
-  docx: { color: "#2B5797", label: "DOC" },
-  pptx: { color: "#D04423", label: "PPT" },
-  png: { color: "#0EA5E9", label: "IMG" },
-};
+// const EXT_MAP = {
+//   pdf: { color: "#F40F02", label: "PDF" },
+//   xlsx: { color: "#217346", label: "XLS" },
+//   xls: { color: "#217346", label: "XLS" },
+//   docx: { color: "#2B5797", label: "DOC" },
+//   pptx: { color: "#D04423", label: "PPT" },
+//   png: { color: "#0EA5E9", label: "IMG" },
+// };
 
 // 파일명을 받아서 해당 확장자의 색상+라벨 반환
 // EXT_MAP에 없는 확장자면 회색 + 확장자 대문자로 표시
-function getFileMeta(filename) {
-  const ext = getExt(filename);
-  return (
-    EXT_MAP[ext] || { color: "#6B7280", label: ext.toUpperCase().slice(0, 4) }
-  );
-}
+// function getFileMeta(filename) {
+//   const ext = getExt(filename);
+//   return (
+//     EXT_MAP[ext] || { color: "#6B7280", label: ext.toUpperCase().slice(0, 4) }
+//   );
+// }
 
 // 기존
 // const TYPE_COLORS = { fig: "#F24E1E", xlsx: "#217346", pdf: "#F40F02" };
 
 function statusColor(status) {
-  if (status === "online") return "#48BB78";
-  if (status === "away") return "#F6AD55";
+  if (status === "ACTIVE") return "#48BB78";
+  if (status === "AWAY") return "#F6AD55";
   return "#A0AEC0";
 }
 
+// 대화방 리스트
 function ConvItem({ conv, active, onClick }) {
-  const name = conv.type === "direct" ? conv.member?.name : conv.name;
-  const avatar = conv.type === "direct" ? conv.member?.avatar : null;
-  const status = conv.type === "direct" ? conv.member?.status : null;
-  const unread = conv.unread > 0;
+  const name = conv.name;
+  const roomType = conv.roomType;
+  const avatar = conv.members?.profileImage;
+  const status = conv.members?.status;
+  const unread = conv.unreadCount > 0;
 
   return (
     <button
@@ -143,19 +106,19 @@ function ConvItem({ conv, active, onClick }) {
       type="button"
       aria-pressed={active}
     >
-      {avatar ? (
+      {roomType === "DIRECT" ? (
         <div className={s.avatarWrap}>
-          <img src={avatar} alt={name || ""} className={s.avatarImg} />
-          {status && (
-            <span
-              className={s.statusDot}
-              style={{ "--status-color": statusColor(status) }}
-            />
-          )}
+          <WSAvatar src={avatar} name={name} size={36} />
+          <span
+            className={s.statusDot}
+            style={{
+              "--status-color": statusColor(status),
+            }}
+          />
         </div>
       ) : (
         <div className={s.groupIcon}>
-          <Users size={15} />
+          <Users size={17} />
         </div>
       )}
 
@@ -166,7 +129,7 @@ function ConvItem({ conv, active, onClick }) {
           >
             {name}
           </span>
-          <span className={s.convTime}>{conv.time}</span>
+          <span className={s.convTime}>{conv.lastMessageAt}</span>
         </div>
         <p className={`${s.convLast} ${unread ? s.convLastUnread : ""}`}>
           {conv.lastMessage}
@@ -178,27 +141,48 @@ function ConvItem({ conv, active, onClick }) {
   );
 }
 
+// 새 대화 시작 모달창
 function NewConvModal({ onClose, onCreate }) {
-  const [convType, setConvType] = useState("direct");
-  const [selectedMembers, setSelectedMembers] = useState([]);
-  const [groupName, setGroupName] = useState("");
+  const { accessToken } = useAuthContext();
+  const [roomType, setRoomType] = useState("DIRECT");
+  const [memberIds, setMemberIds] = useState([]);
+  const [name, setName] = useState("");
+  const [employee, setEmployee] = useState([]);
+
+  // 직원 불러오기
+  useEffect(() => {
+    if (!accessToken) return;
+    getEmployee(accessToken).then((data) => {
+      // console.log(data);
+      setEmployee(Array.isArray(data.data) ? data.data : []);
+    });
+  }, [accessToken]);
 
   function toggle(id) {
-    setSelectedMembers((prev) =>
+    setMemberIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
-  function handleCreate() {
-    if (selectedMembers.length === 0) return;
-    const name =
-      convType === "group"
-        ? groupName || `그룹 채팅 (${selectedMembers.length}명)`
-        : TEAM_MEMBERS.find((m) => m.id === selectedMembers[0])?.name || "";
-    onCreate(name, selectedMembers);
+
+  // 대화 추가 API
+  async function handleCreate() {
+    if (memberIds.length === 0) return;
+    try {
+      const data = { roomType, name, memberIds };
+      await createChatRoom(accessToken, data).then((response) => {
+        const roomName =
+          roomType === "GROUP"
+            ? name || `그룹 채팅 (${memberIds.length}명)`
+            : employee.find((m) => m.id === memberIds[0])?.name || "";
+        onCreate(roomName, memberIds);
+      });
+    } catch (error) {
+      console.log("대화 추가 에러: " + error);
+    }
     onClose();
   }
 
-  const otherMembers = TEAM_MEMBERS.filter((m) => m.id !== 4);
+  const otherMembers = employee.filter((m) => m.id !== 4);
 
   return (
     <div
@@ -232,47 +216,45 @@ function NewConvModal({ onClose, onCreate }) {
         <div className={s.modalBody}>
           <div className={s.tabRow}>
             {[
-              { id: "direct", label: "1:1 대화" },
-              { id: "group", label: "그룹 채팅" },
+              { id: "DIRECT", label: "1:1 대화" },
+              { id: "GROUP", label: "그룹 채팅" },
             ].map((t) => (
               <button
                 key={t.id}
                 onClick={() => {
-                  setConvType(t.id);
-                  setSelectedMembers([]);
+                  setRoomType(t.id);
+                  setMemberIds([]);
                 }}
-                className={`${s.tabBtn} ${convType === t.id ? s.tabBtnActive : ""}`}
+                className={`${s.tabBtn} ${roomType === t.id ? s.tabBtnActive : ""}`}
                 type="button"
-                aria-pressed={convType === t.id}
+                aria-pressed={roomType === t.id}
               >
                 {t.label}
               </button>
             ))}
           </div>
 
-          {convType === "group" && (
+          {roomType === "GROUP" && (
             <input
               type="text"
               placeholder="그룹 이름 (선택사항)"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className={s.groupNameInput}
             />
           )}
 
           <div>
             <p className={s.memberLabel}>
-              {convType === "direct"
+              {roomType === "DIRECT"
                 ? "대화 상대 선택"
-                : `참여 멤버 선택 (${selectedMembers.length}명)`}
+                : `참여 멤버 선택 (${memberIds.length}명)`}
             </p>
             <div className={s.memberList}>
               {otherMembers.map((m) => {
-                const isSelected = selectedMembers.includes(m.id);
+                const isSelected = memberIds.includes(m.id);
                 const isDisabled =
-                  convType === "direct" &&
-                  selectedMembers.length > 0 &&
-                  !isSelected;
+                  roomType === "DIRECT" && memberIds.length > 0 && !isSelected;
                 return (
                   <button
                     key={m.id}
@@ -283,9 +265,10 @@ function NewConvModal({ onClose, onCreate }) {
                     aria-pressed={isSelected}
                   >
                     <div className={s.avatarWrap}>
-                      <img
-                        src={m.avatar}
-                        alt={m.name}
+                      <WSAvatar
+                        src={m.profileImage}
+                        name={m.name}
+                        size={36}
                         className={s.avatarImg}
                       />
                       <span
@@ -299,7 +282,9 @@ function NewConvModal({ onClose, onCreate }) {
                       >
                         {m.name}
                       </p>
-                      <p className={s.memberRole}>{m.role}</p>
+                      <p className={s.memberRole}>
+                        {JOB_GRADE[m.jobGrade] || "-"}
+                      </p>
                     </div>
                     {isSelected && <span className={s.checkMark}>✓</span>}
                   </button>
@@ -315,7 +300,7 @@ function NewConvModal({ onClose, onCreate }) {
           </button>
           <button
             onClick={handleCreate}
-            disabled={selectedMembers.length === 0}
+            disabled={memberIds.length === 0}
             className={s.modalConfirm}
             type="button"
           >
@@ -362,16 +347,95 @@ function FileBubble({ file }) {
 }
 
 export default function Messenger() {
-  const [activeConvId, setActiveConvId] = useState(1);
+  const { accessToken } = useAuthContext();
+  const [activeConvId, setActiveConvId] = useState(0);
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
   const [showInfo, setShowInfo] = useState(true);
   const [showNewConvModal, setShowNewConvModal] = useState(false);
+  const [conversation, setConversation] = useState([]);
+  const [chatRoomId, setChatRoomId] = useState(0);
+  const [teamMember, setTeamMember] = useState([]);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [my, setMy] = useState([]);
+
+  // 멤버 데이터 불러오기
+  useEffect(() => {
+    if (!accessToken || !activeConvId) return;
+    getMember(accessToken, activeConvId).then((data) => {
+      setTeamMember(Array.isArray(data.data) ? data.data : []);
+    });
+  }, [activeConvId]);
+  const TEAM_MEMBERS = Array.isArray(teamMember)
+    ? teamMember.map((member) => ({
+        employeeId: member.id,
+        name: member.name,
+        jobGrade: member.jobGrade,
+        profileImage: member.profileImage,
+      }))
+    : [
+        {
+          employeeId: teamMember.id,
+          name: teamMember.name,
+          jobGrade: teamMember.jobGrade,
+          profileImage: teamMember.profileImage,
+        },
+      ];
+
+  // 메시지 데이터 불러오기
+  useEffect(() => {
+    if (!accessToken || !activeConvId) return;
+    getMessages(accessToken, activeConvId).then((data) => {
+      console.log(data.data[2].senderName);
+      console.log(data.data[2].id);
+      const list = Array.isArray(data.data) ? data.data : [];
+      setChatMessages(
+        list.map((message) => {
+          return {
+            id: message.id,
+            isMine: message.senderId,
+            sender: {
+              name: message.senderName,
+              avatar: message.senderProfileImage,
+            },
+            content: message.content,
+            time: message.sentAt,
+            type: message.msgType,
+          };
+        }),
+      );
+    });
+  }, [accessToken, activeConvId]);
+
+  // 내 데이터 불러오기
+  useEffect(() => {
+    if (!accessToken) return;
+    getMyInfo(accessToken).then((data) => {
+      setMy(Array.isArray(data.data) ? data.data : []);
+    });
+  }, [accessToken]);
+
+  // 대화 데이터 불러오기
+  useEffect(() => {
+    if (!accessToken) return;
+    getChatRoom(accessToken).then((data) => {
+      setConversation(Array.isArray(data.data) ? data.data : []);
+      setActiveConvId(data.data[0].id);
+    });
+  }, [accessToken]);
+  const CONVERSATIONS = conversation.map((conv) => ({
+    id: conv.id,
+    roomType: conv.roomType,
+    name: conv.name,
+    image: conv.thumbnailImage,
+    members: TEAM_MEMBERS.slice(0, 4),
+    lastMessage: conv.lastMessage,
+    lastMessageAt: conv.lastMessageAt,
+    unreadCount: conv.unreadCount,
+    pinned: false,
+  }));
 
   // 기존 MESSAGES 더미 + 이후 전송한 텍스트/파일 메시지 통합 관리
-  const [chatMessages, setChatMessages] = useState(
-    MESSAGES.map((m) => ({ ...m, type: "text" })),
-  );
   // sharedFiles : 오른쪽 패널에 보여줄 파일 목록
   const [sharedFiles, setSharedFiles] = useState([]);
 
@@ -399,9 +463,9 @@ export default function Messenger() {
       setChatMessages((prev) => [
         ...prev,
         {
-          id: Date.now() + Math.random(),
-          isMine: true,
-          sender: { name: "나", avatar: "" },
+          id: Date.now(),
+          isMine: my.id,
+          sender: { name: my.name, avatar: my.profileImage },
           content: "",
           time: now,
           type: "file", // "text"가 아닌 "file"로 구분
@@ -424,8 +488,8 @@ export default function Messenger() {
       ...prev,
       {
         id: Date.now(),
-        isMine: true,
-        sender: { name: "나", avatar: "" },
+        isMine: my.id,
+        sender: { name: my.name, avatar: my.profileImage },
         content: message.trim(),
         time: nowTime(),
         type: "text",
@@ -434,28 +498,19 @@ export default function Messenger() {
     setMessage(""); // 전송 후 입력창 비우기
   }
 
-  // 오른쪽 패널 다운로드 버튼 클릭 시 동작
-  function handleDownload(file) {
-    const url = URL.createObjectURL(file.raw);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = file.name;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   const activeConv = CONVERSATIONS.find((c) => c.id === activeConvId);
   const filteredConvs = CONVERSATIONS.filter((c) => {
-    const label = c.type === "direct" ? c.member.name : c.name || "";
+    const label = c.name || "";
     return label.toLowerCase().includes(search.toLowerCase());
   });
 
-  const activeName =
-    activeConv?.type === "direct" ? activeConv.member?.name : activeConv?.name;
+  const activeName = activeConv?.name;
   const activeAvatar =
-    activeConv?.type === "direct" ? activeConv.member?.avatar : null;
+    activeConv?.roomType === "DIRECT"
+      ? activeConv?.members?.profileImage
+      : null;
   const activeStatus =
-    activeConv?.type === "direct" ? activeConv.member?.status : "online";
+    activeConv?.roomType === "DIRECT" ? activeConv?.members?.status : null;
 
   return (
     <div className={s.root}>
@@ -504,13 +559,9 @@ export default function Messenger() {
 
       <div className={s.chat}>
         <div className={s.chatHeader}>
-          {activeAvatar ? (
+          {activeConv?.roomType === "DIRECT" ? (
             <div className={s.avatarWrap}>
-              <img src={activeAvatar} alt="" className={s.avatarImg} />
-              <span
-                className={s.statusDot}
-                style={{ "--status-color": statusColor(activeStatus) }}
-              />
+              <WSAvatar src={activeAvatar} name={activeName} size={36} />
             </div>
           ) : (
             <div className={s.groupIcon}>
@@ -520,10 +571,10 @@ export default function Messenger() {
           <div>
             <p className={s.chatHeaderName}>{activeName}</p>
             <p className={s.chatHeaderStatus}>
-              {activeConv?.type === "direct"
-                ? activeStatus === "online"
+              {activeConv?.roomType === "DIRECT"
+                ? activeStatus === "ACTIVE"
                   ? "온라인 · 활성"
-                  : activeStatus === "away"
+                  : activeStatus === "AWAY"
                     ? "자리 비움"
                     : "오프라인"
                 : `${activeConv?.members?.length}명`}
@@ -556,7 +607,11 @@ export default function Messenger() {
               className={`${s.msg} ${msg.isMine ? s.msgMine : ""}`}
             >
               {!msg.isMine && (
-                <img src={msg.sender.avatar} alt="" className={s.msgAvatar} />
+                <WSAvatar
+                  src={msg.sender.avatar}
+                  name={msg.sender.name}
+                  size={36}
+                />
               )}
               <div
                 className={`${s.msgBody} ${msg.isMine ? s.msgBodyMine : ""}`}
@@ -632,18 +687,19 @@ export default function Messenger() {
         <div className={s.info}>
           {/* 단체 대화 시 구성원 표시 */}
           <div className={s.memberPad}>
-            {activeConv?.type === "group" && (
+            {activeConv?.roomType === "GROUP" && (
               <div className={s.infomemberList}>
                 <h3 className={s.memberTitle}>
-                  구성원 ({activeConv.members.length}명)
+                  구성원 ({activeConv?.members?.length}명)
                 </h3>
 
-                {activeConv.members.map((member) => (
-                  <div key={member.id} className={s.memberItem}>
+                {activeConv?.members?.map((member) => (
+                  <div key={member.employeeId} className={s.memberItem}>
                     <div className={s.avatarWrap}>
-                      <img
-                        src={member.avatar}
-                        alt={member.name}
+                      <WSAvatar
+                        src={member.profileImage}
+                        name={member.name}
+                        size={36}
                         className={s.avatarImg}
                       />
                       <span
@@ -655,7 +711,9 @@ export default function Messenger() {
                     </div>
                     <div>
                       <p className={s.memberName}>{member.name}</p>
-                      <p className={s.memberRole}>{member.role}</p>
+                      <p className={s.memberRole}>
+                        {JOB_GRADE[member.jobGrade] || "-"}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -666,47 +724,45 @@ export default function Messenger() {
           <div className={s.infoPad}>
             <h3 className={s.infoTitle}>공유 파일</h3>
             {/* 파일 개수 동적으로 표시 */}
-            <p className={s.infoSub}>
-              {sharedFiles.length > 0
-                ? `${sharedFiles.length}개 파일 업로드됨`
-                : "아직 업로드된 파일이 없습니다."}
-            </p>
 
             <div className={s.fileList}>
               {sharedFiles.length === 0 ? (
-                <div className={s.fileEmpty}>
-                  <Paperclip size={22} className={s.fileEmptyIcon} />
-                  <p>
-                    파일을 첨부하면 <br /> 여기에 표시됩니다.
-                  </p>
-                </div>
+                <WSEmptyState
+                  title="아직 업로드된 파일이 없습니다."
+                  icon={<Paperclip />}
+                />
               ) : (
                 sharedFiles.map((file) => {
                   const meta = getFileMeta(file.name);
                   return (
-                    <div
-                      key={file.id}
-                      className={s.fileRow}
-                      onClick={() => handleDownload(file)}
-                      style={{ cursor: "pointer" }}
-                      role="button"
-                      aria-label={`${file.name} 다운로드`}
-                    >
-                      <div className={s.fileLeft}>
-                        <div
-                          className={s.fileIcon}
-                          style={{ "--file-color": meta.color }}
-                        >
-                          {meta.label}
-                        </div>
-                        <div>
-                          <p className={s.fileName}>{file.name}</p>
-                          <p className={s.fileSize}>
-                            {file.size} · {file.uploadedAt}
-                          </p>
+                    <>
+                      <p className={s.infoSub}>
+                        `${sharedFiles.length}개 파일 업로드됨`
+                      </p>
+                      <div
+                        key={file.id}
+                        className={s.fileRow}
+                        onClick={() => handleDownload(file)}
+                        style={{ cursor: "pointer" }}
+                        role="button"
+                        aria-label={`${file.name} 다운로드`}
+                      >
+                        <div className={s.fileLeft}>
+                          <div
+                            className={s.fileIcon}
+                            style={{ "--file-color": meta.color }}
+                          >
+                            {meta.label}
+                          </div>
+                          <div>
+                            <p className={s.fileName}>{file.name}</p>
+                            <p className={s.fileSize}>
+                              {file.size} · {file.uploadedAt}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </>
                   );
                 })
               )}
