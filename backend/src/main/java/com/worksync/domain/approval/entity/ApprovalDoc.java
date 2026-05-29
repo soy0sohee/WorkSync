@@ -3,6 +3,7 @@ package com.worksync.domain.approval.entity;
 import com.worksync.domain.employee.entity.Employee;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
@@ -49,6 +50,7 @@ public class ApprovalDoc {
     @Builder.Default
     private List<ApprovalLine> approvalLines = new ArrayList<>();
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "doc", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ApprovalDocItem> approvalDocItems = new ArrayList<>();
