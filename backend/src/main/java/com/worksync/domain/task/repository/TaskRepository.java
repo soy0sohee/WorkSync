@@ -16,14 +16,15 @@ public interface TaskRepository extends JpaRepository<Task,Long> {
     //전체 목록 -상태 필터 +작업명/담당자명 키워드 검색+페이징
     //작업명,담당자명 키워드 검색을 위해서 @Query사용
     @Query("""
-    SELECT t FROM Task t
-    LEFT JOIN FETCH t.creator
-    LEFT JOIN FETCH t.assignee
-    LEFT JOIN FETCH t.department
-    WHERE(:status IS NULL OR t.status= :status)
-    AND(:keyword IS NULL OR t.title LIKE %:keyword%
-    OR t.assignee.name LIKE %:keyword%)
-    """)
+        SELECT t FROM Task t
+        LEFT JOIN FETCH t.creator
+        LEFT JOIN FETCH t.assignee
+        LEFT JOIN FETCH t.department
+        WHERE (CAST(:status AS string) IS NULL OR t.status = :status)
+          AND (CAST(:keyword AS string) IS NULL
+               OR t.title LIKE %:keyword%
+               OR t.assignee.name LIKE %:keyword%)
+        """)
 
     Page<Task> findAllWithFilter(
             @Param("status")TaskStatus status,
@@ -32,13 +33,13 @@ public interface TaskRepository extends JpaRepository<Task,Long> {
 
     //담당자별 목록- 상태 필터+페이징
     @Query("""
-    SELECT t FROM Task t
-    LEFT JOIN FETCH t.creator
-    LEFT JOIN FETCH t.assignee
-    LEFT JOIN FETCH t.department
-    WHERE t.assignee.id= :assigneeId
-    AND(:status IS NULL OR t.status=:status)
-    """)
+        SELECT t FROM Task t
+        LEFT JOIN FETCH t.creator
+        LEFT JOIN FETCH t.assignee
+        LEFT JOIN FETCH t.department
+        WHERE t.assignee.id = :assigneeId
+          AND (CAST(:status AS string) IS NULL OR t.status = :status)
+        """)
 
     Page<Task> findByAssigneeWithFilter(@Param("assigneeId")Long assigneeId,
                                         @Param("status")TaskStatus status,
@@ -49,13 +50,13 @@ public interface TaskRepository extends JpaRepository<Task,Long> {
 
     //부서별 목록- 상태 필터+페이징
     @Query("""
-    SELECT t FROM Task t
-    LEFT JOIN FETCH t.creator
-    LEFT JOIN FETCH t.assignee
-    LEFT JOIN FETCH t.department
-    WHERE t.department.id=:departmentId
-    AND(:status IS NULL OR t.status=:status)
-    """)
+        SELECT t FROM Task t
+        LEFT JOIN FETCH t.creator
+        LEFT JOIN FETCH t.assignee
+        LEFT JOIN FETCH t.department
+        WHERE t.department.id = :departmentId
+          AND (CAST(:status AS string) IS NULL OR t.status = :status)
+        """)
 
     Page<Task> findByDepartmentWithFilter(
             @Param("departmentId")Long departmentId,

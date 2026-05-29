@@ -130,6 +130,7 @@ public class TaskService {
     }
 
     //담당자 후보 목록
+    @Transactional
     public List<Employee>getCandidates(Long departmentId, JobGrade jobGrade){
         if(departmentId !=null && jobGrade !=null){
             return employeeRepository.findByDepartmentIdAndJobGrade(departmentId,jobGrade);
