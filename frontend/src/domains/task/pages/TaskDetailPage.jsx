@@ -49,8 +49,8 @@ export default function TaskDetail() {
             <div className={s.infoGrid}>
               <div className={s.ColWrapper}>
                 <div className={s.infoCol}>
-                  <p className={s.infoLabel}>프로젝트명</p>
-                  <p className={s.infoValue}>그룹웨어 시스템 구축</p>
+                  <p className={s.infoLabel}>업무명</p>
+                  <p className={s.infoValue}>{task.title}</p>
                 </div>
                 <div className={s.infoCol}>
                   <p className={s.infoLabel}>기간</p>
