@@ -21,14 +21,15 @@ import org.springframework.web.bind.annotation.*;
 public class PostController {
     private  final PostService postService;
 
-    //게시글 목록 조회
+    //게시글 목록 조회 (departmentId: ADMIN이 부서게시판에서 특정 부서만 필터링할 때)
     @GetMapping("/{boardId}/posts")
     public ResponseEntity<ApiResponse<Page<PostResponse>>> getPosts(
             @PathVariable Long boardId,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long departmentId,
             Pageable pageable,
             @AuthenticationPrincipal CustomUserDetails user) {
-        return ResponseEntity.ok(ApiResponse.ok(postService.getPosts(boardId, keyword, pageable, user)));
+        return ResponseEntity.ok(ApiResponse.ok(postService.getPosts(boardId, keyword, departmentId, pageable, user)));
     }
 
     //게시글 상세 조회

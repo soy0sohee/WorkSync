@@ -27,8 +27,10 @@ public class PostService {
     private final BoardRepository boardRepository;
 
     //게시글 목록 조회(페이징+제목검색)
+    //departmentId: ADMIN이 부서게시판에서 특정 부서만 골라볼 때 사용 (null이면 전체 부서)
     @Transactional(readOnly = true)
-    public Page<PostResponse> getPosts(Long boardId, String keyword, Pageable pageable, CustomUserDetails user) {
+    public Page<PostResponse> getPosts(Long boardId, String keyword, Long departmentId,
+                                       Pageable pageable, CustomUserDetails user) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new CustomException(ErrorCode.BOARD_NOT_FOUND));
 
@@ -39,19 +41,27 @@ public class PostService {
                     && user.getEmployee().getRole() == EmployeeRole.ADMIN;
 
             if (isAdmin) {
-                // ADMIN: 부서 제한 없이 모든 부서게시판 글 조회
-                if (keyword != null) {
-                    posts = postRepository.findByBoardBoardTypeAndTitleContaining(BoardType.DEPARTMENT, keyword, pageable);
+                // ADMIN: 부서 제한 없이 모든 부서게시판 글 조회 (departmentId 지정 시 해당 부서만)
+                if (departmentId != null) {
+                    if (keyword != null) {
+                        posts = postRepository.findByBoardBoardTypeAndTitleContainingAndAuthorDepartmentId(BoardType.DEPARTMENT, keyword, departmentId, pageable);
+                    } else {
+                        posts = postRepository.findByBoardBoardTypeAndAuthorDepartmentId(BoardType.DEPARTMENT, departmentId, pageable);
+                    }
                 } else {
-                    posts = postRepository.findByBoardBoardType(BoardType.DEPARTMENT, pageable);
+                    if (keyword != null) {
+                        posts = postRepository.findByBoardBoardTypeAndTitleContaining(BoardType.DEPARTMENT, keyword, pageable);
+                    } else {
+                        posts = postRepository.findByBoardBoardType(BoardType.DEPARTMENT, pageable);
+                    }
                 }
             } else {
                 // USER: 해당 부서 작성자 글만 반환
-                Long departmentId = board.getDepartment().getId();
+                Long deptId = board.getDepartment().getId();
                 if (keyword != null) {
-                    posts = postRepository.findByBoardIdAndTitleContainingAndAuthorDepartmentId(boardId, keyword, departmentId, pageable);
+                    posts = postRepository.findByBoardIdAndTitleContainingAndAuthorDepartmentId(boardId, keyword, deptId, pageable);
                 } else {
-                    posts = postRepository.findByBoardIdAndAuthorDepartmentId(boardId, departmentId, pageable);
+                    posts = postRepository.findByBoardIdAndAuthorDepartmentId(boardId, deptId, pageable);
                 }
             }
         } else {
