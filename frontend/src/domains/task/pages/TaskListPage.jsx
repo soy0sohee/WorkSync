@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipboardList, Plus } from "lucide-react";
 import useAuthContext from "../../../store/AuthContext";
-import { KANBAN_TASKS } from "../../../constants/mockData";
+import { useEffect } from "react";
+import { getTaskList } from "../services/taskApi";
 import {
   WSAvatar,
   WSBadge,
@@ -14,16 +15,16 @@ import {
 import s from "./TaskListPage.module.css";
 
 const STATUS_CONFIG = {
-  todo: { label: "대기중" },
-  inProgress: { label: "진행중" },
-  done: { label: "완료" },
+  TODO: { label: "대기중" },
+  IN_PROGRESS: { label: "진행중" },
+  DONE: { label: "완료" },
 };
 
 const STATUS_OPTIONS = [
   { key: "all", label: "전체" },
-  { key: "todo", label: "대기중" },
-  { key: "inProgress", label: "진행중" },
-  { key: "done", label: "완료" },
+  { key: "TODO", label: "대기중" },
+  { key: "IN_PROGRESS", label: "진행중" },
+  { key: "DONE", label: "완료" },
 ];
 
 const TH_COL = ["상태", "작업명", "진행률(%)", "담당자", "프로젝트 기간"];
@@ -32,16 +33,25 @@ export default function Tasks() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
+  // 업무 목록 배열
+  const [tasks, setTasks] = useState([]);
+  // 전체 업무 개수, 페이징 처리
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
   const { accessToken } = useAuthContext();
   const navigate = useNavigate();
 
-  const allTasks = [
-    ...KANBAN_TASKS.todo.map((t) => ({ ...t, status: "todo" })),
-    ...KANBAN_TASKS.inProgress.map((t) => ({ ...t, status: "inProgress" })),
-    ...KANBAN_TASKS.done.map((t) => ({ ...t, status: "done" })),
-  ];
+  useEffect(() => {
+    if (!accessToken) return;
 
-  const filtered = allTasks.filter((task) => {
+    getTaskList(accessToken, page - 1, 10).then((data) => {
+      if (!data) return;
+      setTasks(data.content);
+      setTotalElements(data.totalElements);
+    });
+  }, [accessToken, page]);
+
+  const filtered = tasks.filter((task) => {
     const matchSearch =
       task.title
         .replace(/\s/g, "")
@@ -109,13 +119,9 @@ export default function Tasks() {
                 <p className={s.title}>{task.title}</p>
                 <p className={s.progress}>{task.progress}%</p>
                 <div className={s.assignee}>
-                  <WSAvatar
-                    src={task.assignee.avatar}
-                    name={task.assignee.name}
-                    size={28}
-                  />
+                  <WSAvatar src={null} name={task.assigneeName} size={28} />
                   <span className={s.assigneeName}>
-                    {task.assignee.name.split(" ")[0]}
+                    {task.assigneeName.split(" ")[0]}
                   </span>
                 </div>
                 <p className={s.period}>
