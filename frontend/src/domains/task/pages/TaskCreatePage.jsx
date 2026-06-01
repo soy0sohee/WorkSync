@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Paperclip, CheckCircle, Send, X } from "lucide-react";
-import { TEAM_MEMBERS } from "../../../constants/mockData";
+import useAuthContext from "../../../store/AuthContext";
+import { createTask, getEmployees } from "../services/taskApi";
 import { WSCard, WSButton } from "../../../components/common/CommonWidgets";
 import {
   WSInput,
@@ -14,11 +15,10 @@ import {
 import s from "./TaskCreatePage.module.css";
 
 const STATUS_OPTIONS = [
-  { key: "todo", label: "대기중" },
-  { key: "inProgress", label: "진행중" },
-  { key: "done", label: "완료" },
+  { key: "TODO", label: "대기중" },
+  { key: "IN_PROGRESS", label: "진행중" },
+  { key: "DONE", label: "완료" },
 ];
-
 const PROGRESS_OPTIONS = [
   { key: "0", label: "0%" },
   { key: "10", label: "10%" },
@@ -40,19 +40,31 @@ const ALLOWED_EXT = [".pdf", ".pptx", ".xlsx", ".docx"];
 
 export default function TaskNew() {
   const navigate = useNavigate();
+  const { accessToken } = useAuthContext();
+  const [members, setMembers] = useState([]);
   const [form, setForm] = useState({
     title: "",
     description: "",
-    status: "todo",
+    status: "TODO",
     progress: "0",
-    assignee: "",
-    start_date: "",
-    due_date: "",
+    assigneeId: "",
+    departmentId: null,
+    startDate: "",
+    dueDate: "",
   });
   const [files, setFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!accessToken) return;
+
+    getEmployees(accessToken).then((data) => {
+      if (!data) return;
+      setMembers(data);
+    });
+  }, [accessToken]);
 
   function validationFile(file) {
     const errors = [];
@@ -101,8 +113,23 @@ export default function TaskNew() {
 
   function handleSubmit() {
     if (!isValid) return;
-    setSubmitted(true);
-    setTimeout(() => navigate("/tasks"), 1600);
+
+    const data = {
+      title: form.title,
+      description: form.description,
+      status: form.status,
+      progress: Number(form.progress),
+      assigneeId: Number(form.assigneeId),
+      departmentId: form.departmentId,
+      startDate: form.startDate,
+      dueDate: form.dueDate,
+    };
+
+    createTask(accessToken, data).then((res) => {
+      if (!res) return;
+      setSubmitted(true);
+      setTimeout(() => navigate("/tasks"), 1600);
+    });
   }
 
   if (submitted) {
@@ -148,12 +175,19 @@ export default function TaskNew() {
                   <WSSelect
                     placeholder="담당자 선택"
                     value={form.assignee}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, assignee: e.target.value }))
-                    }
-                    options={TEAM_MEMBERS.map((m) => ({
+                    onChange={(e) => {
+                      const selected = members.find(
+                        (m) => m.id === Number(e.target.value),
+                      );
+                      setForm((p) => ({
+                        ...p,
+                        assigneeId: Number(e.target.value),
+                        departmentId: selected?.departmentId ?? null,
+                      }));
+                    }}
+                    options={members.map((m) => ({
                       value: m.id,
-                      label: `${m.name} (${m.dept}, ${m.role})`,
+                      label: `${m.name} (${m.departmentName}, ${m.jobGrade})`,
                     }))}
                   />
                 </div>
@@ -163,10 +197,10 @@ export default function TaskNew() {
                     startValue={form.start_date}
                     endValue={form.due_date}
                     onStartChange={(e) =>
-                      setForm((p) => ({ ...p, start_date: e.target.value }))
+                      setForm((p) => ({ ...p, startDate: e.target.value }))
                     }
                     onEndChange={(e) =>
-                      setForm((p) => ({ ...p, due_date: e.target.value }))
+                      setForm((p) => ({ ...p, dueDate: e.target.value }))
                     }
                   />
                 </div>

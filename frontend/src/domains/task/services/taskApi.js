@@ -18,3 +18,42 @@ export async function getTaskList(accessToken, page = 0, size = 10) {
       console.log("에러발생: " + error);
     });
 }
+
+// 업무 등록
+export async function createTask(accessToken, data) {
+  return await fetch(`${BASE_URL}/tasks`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+  })
+    .then((response) => response.json())
+    .then((json) => {
+      console.log(json);
+      return json.data;
+    })
+    .catch((error) => {
+      console.log("에러발생 : " + error);
+    });
+}
+
+// 직원 목록 조회
+export async function getEmployees(accessToken) {
+  return await fetch(`${BASE_URL}/employees`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((response) => response.json())
+    .then((json) => {
+      console.log(json);
+      return json.data;
+    })
+    .catch((error) => {
+      console.log("에러발생 : " + error);
+    });
+}

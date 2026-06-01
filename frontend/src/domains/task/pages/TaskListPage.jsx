@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipboardList, Plus } from "lucide-react";
 import useAuthContext from "../../../store/AuthContext";
-import { useEffect } from "react";
 import { getTaskList } from "../services/taskApi";
 import {
   WSAvatar,
@@ -15,9 +14,9 @@ import {
 import s from "./TaskListPage.module.css";
 
 const STATUS_CONFIG = {
-  TODO: { label: "대기중" },
-  IN_PROGRESS: { label: "진행중" },
-  DONE: { label: "완료" },
+  TODO: { label: "대기중", bg: "#FEF3C7", text: "#92400E" },
+  IN_PROGRESS: { label: "진행중", bg: "#DBEAFE", text: "#1E40AF" },
+  DONE: { label: "완료", bg: "#D1FAE5", text: "#065F46" },
 };
 
 const STATUS_OPTIONS = [
@@ -57,7 +56,7 @@ export default function Tasks() {
         .replace(/\s/g, "")
         .toLowerCase()
         .includes(search.replace(/\s/g, "").toLowerCase()) ||
-      task.id.toLowerCase().includes(search.toLowerCase());
+      String(task.id).toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || task.status === statusFilter;
     return matchSearch && matchStatus;
   });

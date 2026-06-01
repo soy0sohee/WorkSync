@@ -83,6 +83,10 @@ const BADGE_STYLES = {
   inProgress: { bg: "#DBEAFE", color: "#1D4ED8" },
   review: { bg: "#EDE9FE", color: "#7C3AED" },
   done: { bg: "#D1FAE5", color: "#059669" },
+  // task 업무용
+  TODO: { bg: "#FEF3C7", color: "#92400E" },
+  IN_PROGRESS: { bg: "#DBEAFE", color: "#1E40AF" },
+  DONE: { bg: "#D1FAE5", color: "#065F46" },
 };
 
 const STATUS_LABELS = {
