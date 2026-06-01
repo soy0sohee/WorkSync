@@ -96,11 +96,10 @@ public class TaskController {
     }
 
     //업무 삭제
-
     @DeleteMapping("/{taskId}")
-    public  ResponseEntity<Void>delete(@PathVariable Long taskId,
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long taskId,
          @AuthenticationPrincipal CustomUserDetails user){
         taskService.delete(taskId,user.getId());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }
