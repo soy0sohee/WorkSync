@@ -18,4 +18,8 @@ public interface PostRepository extends JpaRepository<Post,Long> {
     // ADMIN 전용 - 특정 타입(DEPARTMENT)의 모든 게시판 글 조회
     Page<Post> findByBoardBoardType(BoardType boardType, Pageable pageable);
     Page<Post> findByBoardBoardTypeAndTitleContaining(BoardType boardType, String keyword, Pageable pageable);
+
+    // ADMIN 전용 - 특정 타입(DEPARTMENT) + 특정 부서 작성자 글 조회
+    Page<Post> findByBoardBoardTypeAndAuthorDepartmentId(BoardType boardType, Long departmentId, Pageable pageable);
+    Page<Post> findByBoardBoardTypeAndTitleContainingAndAuthorDepartmentId(BoardType boardType, String keyword, Long departmentId, Pageable pageable);
 }
