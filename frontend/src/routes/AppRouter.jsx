@@ -7,7 +7,8 @@ import ApprovalDetailPage from "../domains/approval/pages/ApprovalDetailPage";
 import BoardListPage from "../domains/board/pages/BoardListPage";
 import BoardCreatePage from "../domains/board/pages/BoardCreatePage";
 import BoardDetailPage from "../domains/board/pages/BoardDetailPage";
-import OrganizationListPage from "../domains/organization/pages/OrganizationListPage";
+import BoardUpdatePage from "../domains/board/pages/BoardUpdatePage";
+import OrganizationPage from "../domains/organization/pages/OrganizationPage";
 import EmployeeCreatePage from "../domains/organization/pages/EmployeeCreatePage";
 import EmployeeEditPage from "../domains/organization/pages/EmployeeEditPage";
 import TaskListPage from "../domains/task/pages/TaskListPage";
@@ -55,10 +56,10 @@ export const router = createBrowserRouter([
       { path: "board/notice", Component: BoardListPage },
       { path: "board/free", Component: BoardListPage },
       { path: "board/qna", Component: BoardListPage },
-      { path: "board/:id", Component: BoardDetailPage },
-      { path: "organization", Component: OrganizationListPage },
-      { path: "organization/new", Component: EmployeeCreatePage },
-      { path: "organization/edit/:id", Component: EmployeeEditPage },
+      { path: "board/:boardId/:postId", Component: BoardDetailPage },
+      { path: "board/edit/:boardId/:postId", Component: BoardUpdatePage },
+      { path: "organization", Component: OrganizationPage },
+      { path: "organization/employee-add", Component: EmployeeCreatePage },
       { path: "tasks", Component: TaskListPage },
       { path: "tasks/new", Component: TaskCreatePage },
       { path: "tasks/:id", Component: TaskDetailPage },
