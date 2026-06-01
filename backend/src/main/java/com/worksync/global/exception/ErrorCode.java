@@ -29,7 +29,7 @@ public enum ErrorCode {
 
     // Task
     TASK_NOT_FOUND(404, "존재하지 않는 업무입니다."),
-    INVALID_PROGRESS(400, "진행률은 0~100 사이의 10 단위로 입력해주세요."),
+    INVALID_PROGRESS(400, "진행률은 10단위로 입력해주세요."),
 
     // Board / Post
     BOARD_NOT_FOUND(404, "존재하지 않는 게시판입니다."),
