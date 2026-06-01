@@ -37,42 +37,63 @@ const JOB_GRADE = {
 };
 
 // 파일명에서 확장자 추출 - "report.pdf" -> "pdf"
-function getExt(filename) {
-  return filename.split(".").pop().toLowerCase();
-}
+// function getExt(filename) {
+//   return filename.split(".").pop().toLowerCase();
+// }
 
 // 바이트 단위 파일 크기를 읽기 좋게 변환 - 1048576 -> "1.0MB"
-function formatSize(bytes) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+// function formatSize(bytes) {
+//   if (bytes < 1024) return `${bytes} B`;
+//   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+//   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+// }
+
+// ISO 문자열(2026-06-01T11:01:46)을 "오전 11:01" 형식으로 변환
+function formatTime(isoString) {
+  if (!isoString) return "";
+  const day = new Date(isoString);
+  const h = day.getHours();
+  const m = String(day.getMinutes()).padStart(2, "0");
+  return h < 12 ? `오전 ${h || 12}:${m}` : `오후 ${h - 12 || 12}:${m}`;
 }
 
-// 현재 시각을 "오전 9:05" 형식으로 반환 - 메세지 전송 시각 표시용
-function nowTime() {
-  const d = new Date();
-  const h = d.getHours();
-  const m = String(d.getMinutes()).padStart(2, "0");
-  return h < 12 ? `오전 ${h}:${m}` : `오후 ${h - 12 || 12}:${m}`;
+function formatDay(isoString) {
+  if (!isoString) return "";
+  const day = new Date(isoString);
+  const y = day.getFullYear();
+  const m = day.getMonth() + 1;
+  const d = day.getDate();
+  return `${m}월 ${d}일`;
+}
+
+function isToday(isoString) {
+  if (!isoString) return "";
+  const day = new Date(isoString);
+  const today = new Date();
+  return (
+    day.getFullYear() === today.getFullYear() &&
+    day.getMonth() === today.getMonth() &&
+    day.getDate() === today.getDate()
+  );
 }
 
 // 확장자별 색상과 라벨 정의 - 파일 아이콘 뱃지에 사용
-const EXT_MAP = {
-  pdf: { color: "#F40F02", label: "PDF" },
-  xlsx: { color: "#217346", label: "XLS" },
-  xls: { color: "#217346", label: "XLS" },
-  docx: { color: "#2B5797", label: "DOC" },
-  pptx: { color: "#D04423", label: "PPT" },
-  png: { color: "#0EA5E9", label: "IMG" },
-};
+// const EXT_MAP = {
+//   pdf: { color: "#F40F02", label: "PDF" },
+//   xlsx: { color: "#217346", label: "XLS" },
+//   xls: { color: "#217346", label: "XLS" },
+//   docx: { color: "#2B5797", label: "DOC" },
+//   pptx: { color: "#D04423", label: "PPT" },
+//   png: { color: "#0EA5E9", label: "IMG" },
+// };
 
 // 파일명을 받아서 해당 확장자의 색상+라벨 반환
-function getFileMeta(filename) {
-  const ext = getExt(filename);
-  return (
-    EXT_MAP[ext] || { color: "#6B7280", label: ext.toUpperCase().slice(0, 4) }
-  );
-}
+// function getFileMeta(filename) {
+//   const ext = getExt(filename);
+//   return (
+//     EXT_MAP[ext] || { color: "#6B7280", label: ext.toUpperCase().slice(0, 4) }
+//   );
+// }
 
 function statusColor(status) {
   if (status === "ACTIVE") return "#48BB78";
@@ -125,13 +146,13 @@ function ConvItem({ conv, active, onClick }) {
         </p>
       </div>
 
-      {unread && <span className={s.unreadBadge}>{conv.unread}</span>}
+      {unread && <span className={s.unreadBadge}>{conv.unreadCount}</span>}
     </button>
   );
 }
 
 // 새 대화 시작 모달창
-function NewConvModal({ onClose, onCreate }) {
+function NewConvModal({ onClose, onCreate, my }) {
   const { accessToken } = useAuthContext();
   const [roomType, setRoomType] = useState("DIRECT");
   const [memberIds, setMemberIds] = useState([]);
@@ -142,7 +163,6 @@ function NewConvModal({ onClose, onCreate }) {
   useEffect(() => {
     if (!accessToken) return;
     getEmployee(accessToken).then((data) => {
-      // console.log(data);
       setEmployee(Array.isArray(data.data) ? data.data : []);
     });
   }, [accessToken]);
@@ -171,7 +191,7 @@ function NewConvModal({ onClose, onCreate }) {
     onClose();
   }
 
-  const otherMembers = employee.filter((m) => m.id !== 4);
+  const otherMembers = employee.filter((m) => m.id !== my.id);
 
   return (
     <div
@@ -254,12 +274,7 @@ function NewConvModal({ onClose, onCreate }) {
                     aria-pressed={isSelected}
                   >
                     <div className={s.avatarWrap}>
-                      <WSAvatar
-                        src={m.profileImage}
-                        name={m.name}
-                        size={36}
-                        className={s.avatarImg}
-                      />
+                      <WSAvatar src={m.profileImage} name={m.name} size={36} />
                       <span
                         className={s.statusDot}
                         style={{ "--status-color": statusColor(m.status) }}
@@ -300,6 +315,7 @@ function NewConvModal({ onClose, onCreate }) {
     </div>
   );
 }
+
 // 채팅창 안에서 파일 메시지를 보여주는 말풍선 컴포넌트
 function FileBubble({ file }) {
   const meta = getFileMeta(file.name); // 확장자에 맞는 색상 + 라벨 가져오기
@@ -348,6 +364,12 @@ export default function Messenger() {
   const [chatMessages, setChatMessages] = useState([]);
   const [my, setMy] = useState([]);
 
+  // 새 메신저 아래로 스트롤 이동
+  const bottomRef = useRef(null);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
   // 멤버 데이터 불러오기
   useEffect(() => {
     if (!accessToken || !activeConvId) return;
@@ -370,10 +392,11 @@ export default function Messenger() {
     if (!accessToken || !activeConvId) return;
     getMessages(accessToken, activeConvId).then((data) => {
       const list = Array.isArray(data.data) ? data.data : [];
+
       setChatMessages(
-        list.map((msg) => ({
+        list.reverse().map((msg) => ({
           id: msg.id,
-          isMine: msg.senderId === my.id,
+          isMine: msg.senderId === my.id ? true : false,
           sender: {
             name: msg.senderName,
             avatar: msg.senderProfileImage,
@@ -384,7 +407,7 @@ export default function Messenger() {
         })),
       );
     });
-  }, [accessToken, activeConvId]);
+  }, [accessToken, activeConvId, my]);
 
   // 내 데이터 불러오기
   useEffect(() => {
@@ -401,7 +424,7 @@ export default function Messenger() {
       setConversation(Array.isArray(data.data) ? data.data : []);
       setActiveConvId(data.data[0].id);
     });
-  }, [accessToken]);
+  }, [accessToken, showNewConvModal]);
   const CONVERSATIONS = conversation.map((conv) => ({
     id: conv.id,
     roomType: conv.roomType,
@@ -410,7 +433,7 @@ export default function Messenger() {
     otherStatus: conv.otherStatus,
     members: TEAM_MEMBERS,
     lastMessage: conv.lastMessage,
-    lastMessageAt: conv.lastMessageAt,
+    lastMessageAt: formatTime(conv.lastMessageAt),
     unreadCount: conv.unreadCount,
     pinned: false,
   }));
@@ -425,8 +448,8 @@ export default function Messenger() {
   // 파일 선택 시 실행 - 채팅 말풍선 + 오른쪽 목록 동시 업데이트
   function handleFileSelect(e) {
     const files = Array.from(e.target.files); // FileList -> 배열로 변환
-    if (files.length === 0) return; // 선택 취소 시 아무것ㄷ 안함
-    const now = nowTime();
+    if (files.length === 0) return; // 선택 취소 시 아무것도 안함
+    const now = formatTime(new Date().toISOString());
 
     files.forEach((file) => {
       // 파일 정보 객체 생성
@@ -472,10 +495,11 @@ export default function Messenger() {
       // 전송 완료 후 메시지 목록 재조회
       const data = await getMessages(accessToken, activeConvId);
       const list = Array.isArray(data.data) ? data.data : [];
+
       setChatMessages(
-        list.map((msg) => ({
+        list.reverse().map((msg) => ({
           id: msg.id,
-          isMine: msg.senderId === my.id,
+          isMine: msg.senderId === my.id ? true : false,
           sender: { name: msg.senderName, avatar: msg.senderProfileImage },
           content: msg.content,
           time: msg.sentAt,
@@ -582,49 +606,62 @@ export default function Messenger() {
         </div>
 
         <div className={s.messages}>
-          <div className={s.dateRow}>
-            <div className={s.dateLine} />
-            <span className={s.dateLabel}>오늘, 7월 11일</span>
-            <div className={s.dateLine} />
-          </div>
+          {chatMessages.map((msg, index) => {
+            // 이전 메시지와 날짜가 다를때만 날짜 표시
+            const prevMsg = chatMessages[index - 1];
+            const showDate =
+              !prevMsg || formatDay(msg.time) !== formatDay(prevMsg.time);
 
-          {chatMessages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`${s.msg} ${msg.isMine ? s.msgMine : ""}`}
-            >
-              {!msg.isMine && (
-                <WSAvatar
-                  src={msg.sender.avatar}
-                  name={msg.sender.name}
-                  size={36}
-                />
-              )}
-              <div
-                className={`${s.msgBody} ${msg.isMine ? s.msgBodyMine : ""}`}
-              >
-                {!msg.isMine && (
-                  <span className={s.msgSender}>{msg.sender.name}</span>
-                )}
-                {/* 파일이면 FileBubble, 텍스트면 기존 말풍선 */}
-                {msg.type === "file" ? (
-                  <FileBubble file={msg.file} />
-                ) : (
-                  <div
-                    className={`${s.bubble} ${msg.isMine ? s.bubbleMine : ""}`}
-                  >
-                    {msg.content}
+            return (
+              <div key={msg.id}>
+                {showDate && (
+                  <div className={s.dateRow}>
+                    <div className={s.dateLine} />
+                    <span className={s.dateLabel}>
+                      {isToday(msg.time)
+                        ? `오늘, ${formatDay(msg.time)}`
+                        : `${formatDay(msg.time)}`}
+                    </span>
+                    <div className={s.dateLine} />
                   </div>
                 )}
-                <div
-                  className={`${s.msgMeta} ${msg.isMine ? s.msgMetaMine : ""}`}
-                >
-                  <span className={s.msgTime}>{msg.time}</span>
-                  {msg.isMine && <CheckCheck size={12} color="#60A5FA" />}
+
+                <div className={`${s.msg} ${msg.isMine ? s.msgMine : ""}`}>
+                  {!msg.isMine && (
+                    <WSAvatar
+                      src={msg.sender.avatar}
+                      name={msg.sender.name}
+                      size={36}
+                    />
+                  )}
+                  <div
+                    className={`${s.msgBody} ${msg.isMine ? s.msgBodyMine : ""}`}
+                  >
+                    {!msg.isMine && (
+                      <span className={s.msgSender}>{msg.sender.name}</span>
+                    )}
+                    {/* 파일이면 FileBubble, 텍스트면 기존 말풍선 */}
+                    {msg.type === "file" ? (
+                      <FileBubble file={msg.file} />
+                    ) : (
+                      <div
+                        className={`${s.bubble} ${msg.isMine ? s.bubbleMine : ""}`}
+                      >
+                        {msg.content}
+                      </div>
+                    )}
+                    <div
+                      className={`${s.msgMeta} ${msg.isMine ? s.msgMetaMine : ""}`}
+                    >
+                      <span className={s.msgTime}>{formatTime(msg.time)}</span>
+                      {msg.isMine && <CheckCheck size={12} color="#60A5FA" />}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
+          <div ref={bottomRef} />
         </div>
 
         <div className={s.inputBar}>
@@ -687,7 +724,6 @@ export default function Messenger() {
                         src={member.profileImage}
                         name={member.name}
                         size={36}
-                        className={s.avatarImg}
                       />
                       <span
                         className={s.statusDot}
@@ -762,6 +798,7 @@ export default function Messenger() {
         <NewConvModal
           onClose={() => setShowNewConvModal(false)}
           onCreate={() => setShowNewConvModal(false)}
+          my={my}
         />
       )}
     </div>

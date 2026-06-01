@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   Bell,
@@ -14,11 +14,11 @@ import {
   AlertCircle,
   Coffee,
 } from "lucide-react";
-import { NOTIFICATIONS, TEAM_MEMBERS } from "../../constants/mockData";
+import { WSAvatar } from "../../components/common/CommonWidgets";
+import { NOTIFICATIONS } from "../../constants/mockData";
+import { getMyInfo } from "../../domains/auth/services/authApi";
 import styles from "./TopBar.module.css";
 import useAuthContext from "../../store/AuthContext";
-
-const me = TEAM_MEMBERS[3];
 
 const PAGE_TITLES = {
   "/": { title: "대시보드", breadcrumb: ["홈", "대시보드"] },
@@ -63,7 +63,20 @@ const notifColors = {
   system: "#6B7280",
 };
 
+// 직급
+const JOB_GRADE = {
+  STAFF: "사원",
+  SENIOR: "주임",
+  ASSISTANT_MANAGER: "대리",
+  MANAGER: "과장",
+  GENERAL_MANAGER: "부장",
+  DIRECTOR: "이사",
+  CEO: "대표",
+};
+
 export function TopBar({ pathname }) {
+  const { accessToken } = useAuthContext();
+  const [my, setMy] = useState({});
   const [showNotifs, setShowNotifs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [search, setSearch] = useState("");
@@ -74,6 +87,14 @@ export function TopBar({ pathname }) {
   };
   const unreadCount = NOTIFICATIONS.filter((n) => !n.read).length;
   const { logout } = useAuthContext();
+
+  // 내 데이터 불러오기
+  useEffect(() => {
+    if (!accessToken) return;
+    getMyInfo(accessToken).then((data) => {
+      setMy(data.data || {});
+    });
+  }, [accessToken]);
 
   return (
     <header className={styles.header}>
@@ -182,22 +203,18 @@ export function TopBar({ pathname }) {
           aria-expanded={showProfile}
         >
           <div className={styles.profileAvatarWrap}>
-            <img
-              src={me.avatar}
-              alt={me.name}
-              className={styles.profileAvatar}
-            />
+            <WSAvatar src={my.profileImage} name={my.name} size={36} />
             {/* 프로필이미지 상태표시(온라인)  */}
             <span
               className={`${styles.profileStatus} ${isAway ? styles.profileStatusAway : ""}`}
             />
           </div>
           <div className={styles.profileMeta}>
-            <div className={styles.profileName}>{me.name}</div>
+            <div className={styles.profileName}>{my.name}</div>
             <div
               className={`${styles.profileSub} ${isAway ? styles.profileSubAway : ""}`}
             >
-              {isAway ? "자리 비움" : me.role}
+              {isAway ? "자리 비움" : JOB_GRADE[my.jobGrade]}
             </div>
           </div>
           <ChevronDown size={14} className={styles.profileChevron} />
