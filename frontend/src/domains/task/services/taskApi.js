@@ -19,15 +19,33 @@ export async function getTaskList(accessToken, page = 0, size = 10) {
     });
 }
 
-// 업무 등록
-export async function createTask(accessToken, data) {
-  return await fetch(`${BASE_URL}/tasks`, {
-    method: "POST",
+// 내 업무 목록 조회
+export async function getMyTaskList(accessToken, page = 0, size = 10) {
+  return await fetch(`${BASE_URL}/tasks/my?page=${page}&size=${size}`, {
+    method: "GET",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify(data),
+  })
+    .then((response) => response.json())
+    .then((json) => {
+      console.log(json);
+      return json.data;
+    })
+    .catch((error) => {
+      console.log("에러발생: " + error);
+    });
+}
+
+// 업무 상세 조회
+export async function getTaskById(accessToken, taskId) {
+  return await fetch(`${BASE_URL}/tasks/${taskId}`, {
+    methos: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
   })
     .then((response) => response.json())
     .then((json) => {
@@ -56,4 +74,42 @@ export async function getEmployees(accessToken) {
     .catch((error) => {
       console.log("에러발생 : " + error);
     });
+}
+
+// 업무 등록
+export async function createTask(accessToken, data) {
+  return await fetch(`${BASE_URL}/tasks`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+  })
+    .then((response) => response.json())
+    .then((json) => {
+      console.log(json);
+      return json.data;
+    })
+    .catch((error) => {
+      console.log("에러발생 : " + error);
+    });
+}
+
+// 업무 수정
+export async function updateTask(accessToken, taskId, data) {
+  return await fetch(`${BASE_URL}/tasks/${taskId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+  })
+    .then((response) => response.json())
+    .then((json) => {
+      console.log(json);
+      return json.data;
+    })
+    .catch((error) => console.log("에러발생 : " + error));
 }

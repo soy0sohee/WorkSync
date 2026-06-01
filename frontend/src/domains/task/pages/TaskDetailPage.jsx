@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Download, Pencil } from "lucide-react";
-import { KANBAN_TASKS } from "../../../constants/mockData";
+import useAuthContext from "../../../store/AuthContext";
+import { getTaskById } from "../services/taskApi";
 import {
   WSAvatar,
   WSButton,
@@ -12,22 +14,20 @@ import s from "./TaskDetailPage.module.css";
 export default function TaskDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { accessToken } = useAuthContext();
+  const [task, setTask] = useState(null);
 
-  const allTasks = [
-    ...KANBAN_TASKS.todo.map((t) => ({ ...t, status: "todo" })),
-    ...KANBAN_TASKS.inProgress.map((t) => ({ ...t, status: "inProgress" })),
-    ...KANBAN_TASKS.review.map((t) => ({ ...t, status: "review" })),
-    ...KANBAN_TASKS.done.map((t) => ({ ...t, status: "done" })),
-  ];
+  useEffect(() => {
+    if (!accessToken) return;
 
-  const task = allTasks.find((t) => t.id === id);
+    getTaskById(accessToken, id).then((data) => {
+      if (!data) return;
+      setTask(data);
+    });
+  }, [accessToken, id]);
 
   if (!task) {
-    return (
-      <div className={s.notFound}>
-        <p>업무를 찾을 수 없습니다</p>
-      </div>
-    );
+    return <div>로딩 중...</div>;
   }
 
   return (
@@ -55,7 +55,7 @@ export default function TaskDetail() {
                 <div className={s.infoCol}>
                   <p className={s.infoLabel}>기간</p>
                   <p className={s.infoValue}>
-                    {task.startDate} ~ {task.endDate}
+                    {task.startDate} ~ {task.dueDate}
                   </p>
                 </div>
                 <div className={s.infoCol}>
@@ -68,54 +68,25 @@ export default function TaskDetail() {
                   <p className={s.infoLabel}>담당자</p>
                   <div className={s.infoValue}>
                     <div className={s.assigneeValue}>
-                      <WSAvatar
-                        src={task.assignee.avatar}
-                        name={task.assignee.name}
-                        size={24}
-                      />
-                      <span>
-                        {task.assignee.name} ({task.assignee.dept},{" "}
-                        {task.assignee.role})
-                      </span>
+                      <WSAvatar src={null} name={task.assigneeName} size={24} />
+                      <span>{task.assigneeName}</span>
                     </div>
                   </div>
                   <p className={s.infoLabel}>작성자</p>
                   <div className={s.infoValue}>
                     <div className={s.assigneeValue}>
-                      <WSAvatar
-                        src={task.assignee.avatar}
-                        name={task.assignee.name}
-                        size={24}
-                      />
-                      <span>
-                        {task.assignee.name} ({task.assignee.dept},{" "}
-                        {task.assignee.role})
-                      </span>
+                      <WSAvatar src={null} name={task.assigneeName} size={24} />
+                      <span>{task.creatorName}</span>
                     </div>
                   </div>
                   <p className={s.infoLabel}>작성일</p>
-                  <p className={s.infoValue}>2026-05-01</p>
+                  <p className={s.infoValue}>
+                    {new Date(task.createdAt).toLocaleDateString("ko-KR")}
+                  </p>
                 </div>
               </div>
               <div className={s.details}>
-                <div className={s.detailLines}>
-                  <p>1. 금일 수행 업무</p>
-                  <p>1) 전자결재 화면 UI 개발</p>
-                  <p>- 결재선 지정 모달 구현</p>
-                  <p>- 승인/반려 버튼 상태 처리</p>
-                  <p>- 모바일 반응형 레이아웃 수정</p>
-                  <p>2) API 연동</p>
-                  <p>- 결재 목록 조회 API 연결</p>
-                  <p>- Axios 인터셉터 토큰 처리 추가</p>
-                  <p>- 오류 응답 공통 핸들링 적용</p>
-                  <p>3) DB 설계 검토</p>
-                  <p>- 문서 데이터 승인상태 컬럼 추가</p>
-                  <p>- 결재 이력 테이블 인덱스 추가 검토</p>
-                  <p>2. 이슈 사항</p>
-                  <p>- 결재선 데이터 구조와 프론트 상태값 불일치 발생</p>
-                  <p>- Safari 브라우저에서 모달 스크롤 오류 확인</p>
-                  <p>- QA 환경 API 응답 속도 지연 현상 존재</p>
-                </div>
+                <div className={s.detailLines}>{task.description}</div>
               </div>
             </div>
           </WSCard>

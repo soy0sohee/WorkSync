@@ -14,9 +14,9 @@ import {
 import s from "./TaskListPage.module.css";
 
 const STATUS_CONFIG = {
-  TODO: { label: "대기중", bg: "#FEF3C7", text: "#92400E" },
-  IN_PROGRESS: { label: "진행중", bg: "#DBEAFE", text: "#1E40AF" },
-  DONE: { label: "완료", bg: "#D1FAE5", text: "#065F46" },
+  TODO: { label: "대기중" },
+  IN_PROGRESS: { label: "진행중" },
+  DONE: { label: "완료" },
 };
 
 const STATUS_OPTIONS = [
