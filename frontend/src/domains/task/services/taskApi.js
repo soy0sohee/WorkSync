@@ -113,3 +113,22 @@ export async function updateTask(accessToken, taskId, data) {
     })
     .catch((error) => console.log("에러발생 : " + error));
 }
+
+// 업무 삭제
+export async function deleteTask(accessToken, taskId, data) {
+  return await fetch(`${BASE_URL}/tasks/${taskId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((response) => {
+      console.log("삭제 상태코드 : " + response.status);
+      return response.json();
+    })
+    .then((json) => {
+      console.log("삭제 응답 : " + json);
+    })
+    .catch((error) => console.log("에러발생 : " + error));
+}

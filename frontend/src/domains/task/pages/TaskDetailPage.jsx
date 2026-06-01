@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Download, Pencil } from "lucide-react";
 import useAuthContext from "../../../store/AuthContext";
-import { getTaskById } from "../services/taskApi";
+import { getTaskById, deleteTask } from "../services/taskApi";
 import {
   WSAvatar,
   WSButton,
@@ -117,8 +117,11 @@ export default function TaskDetail() {
               className={s.draftBtn}
             />
             <button
-              onClick={() => {
-                if (confirm("업무를 삭제하시겠습니까?")) navigate("/tasks");
+              onClick={async () => {
+                if (confirm("업무를 삭제하시겠습니까?")) {
+                  await deleteTask(accessToken, id);
+                  navigate("/tasks/");
+                }
               }}
               className={s.cancelBtn}
             >
