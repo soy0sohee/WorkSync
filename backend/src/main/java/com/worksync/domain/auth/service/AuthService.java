@@ -52,8 +52,10 @@ public class AuthService {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        // 로그인 성공 — 실패 횟수 초기화
+        // 로그인 성공 — 실패 횟수 초기화 및 상태 변경
         employee.resetLoginFailCount();
+        // 상태 확인 로직
+        employee.changeStatus(request.getStatus() != null ? request.getStatus() : EmployeeStatus.ACTIVE);
 
         String accessToken = jwtTokenProvider.generateAccessToken(
                 employee.getId(), employee.getEmail(), employee.getRole().name());
@@ -95,6 +97,15 @@ public class AuthService {
         return tokens;
     }
 
-    public void logout() {
+    // 로그아웃
+    @Transactional
+    public void logout(ReissueRequest request) {
+        if (!jwtTokenProvider.validateToken(request.getRefreshToken())) {
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        }
+        Long employeeId = jwtTokenProvider.getEmployeeId(request.getRefreshToken());
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EMPLOYEE_NOT_FOUND));
+        employee.changeStatus(EmployeeStatus.INACTIVE);
     }
 }
