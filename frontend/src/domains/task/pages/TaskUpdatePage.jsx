@@ -1,15 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import {
+  getTaskById,
+  updateTask,
+  getEmployees,
+  getMyInfo,
+} from "../services/taskApi";
+import useAuthContext from "../../../store/AuthContext";
 import { ArrowLeft, Paperclip, CheckCircle, Pencil } from "lucide-react";
-import { TEAM_MEMBERS } from "../../../constants/mockData";
 import { WSCard, WSButton } from "../../../components/common/CommonWidgets";
-import { WSInput, WSSelect, WSTextarea, WSFileUploadZone, WSCalendarpicker, WSFileList } from "../../../components/common/FormComponents";
+
+import {
+  WSInput,
+  WSSelect,
+  WSTextarea,
+  WSFileUploadZone,
+  WSCalendarpicker,
+  WSFileList,
+} from "../../../components/common/FormComponents";
 import s from "./TaskCreatePage.module.css";
 
 const STATUS_OPTIONS = [
-  { key: "todo", label: "대기중" },
-  { key: "inProgress", label: "진행중" },
-  { key: "done", label: "완료" },
+  { key: "TODO", label: "대기중" },
+  { key: "IN_PROGRESS", label: "진행중" },
+  { key: "DONE", label: "완료" },
 ];
 
 const PROGRESS_OPTIONS = [
@@ -29,52 +44,83 @@ const PROGRESS_OPTIONS = [
 const TOOLBAR_ITEMS = ["굵게", "기울임", "밑줄", "|", "목록"];
 
 const MAX_SIZE_MB = 50;
-const ALLOWED_EXT = ['.pdf', '.pptx', '.xlsx', '.docx'];
+const ALLOWED_EXT = [".pdf", ".pptx", ".xlsx", ".docx"];
 
-export default function TaskNew() {
+export default function TaskUpdate() {
   const navigate = useNavigate();
-  // 폼 상태 - 기존 데이터로 초기값
+  const { id: taskId } = useParams();
+  const { accessToken } = useAuthContext();
+  const [members, setMembers] = useState([]);
   const [form, setForm] = useState({
     title: "",
     description: "",
-    status: "todo",
+    status: "TODO",
     progress: "0",
-    assignee: "",
-    start_date: "",
-    due_date: "",
+    assigneeId: "",
+    departmentId: null,
+    startDate: "",
+    dueDate: "",
   });
   const [files, setFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [role, setRole] = useState(null);
+  const [myDepartmentId, setMyDepartmentId] = useState(null);
+  const [myId, setMyId] = useState(null);
 
   function validationFile(file) {
     const errors = [];
-    const ext = '.' + file.name.split(".").pop().toLowerCase();
-
-    // 확장자 검사
-    if (!ALLOWED_EXT.includes(ext)) {
-      errors.push('확장자 에러');
-      alert(`허용되지 않는 확장자입니다.`);
-    }
-
-    // 용량 검사
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      errors.push('파일 크기 초과');
-      alert(`파일 크기가 ${MAX_SIZE_MB}MB를 초과했습니다.`)
-    }
+    const ext = "." + file.name.split(".").pop().toLowerCase();
 
     return errors;
   }
+
+  useEffect(() => {
+    if (!accessToken) return;
+
+    getMyInfo(accessToken).then((data) => {
+      if (!data) return;
+      setRole(data.role);
+      setMyId(data.id);
+      setMyDepartmentId(data.departmentId);
+    });
+
+    //직원 목록 불러오기
+    getEmployees(accessToken).then((data) => {
+      if (!data) return;
+      setMembers(data);
+    });
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+
+    //기존 업무 데이터 불러오기
+    getTaskById(accessToken, taskId).then((data) => {
+      if (!data) return;
+
+      setForm({
+        title: data.title,
+        description: data.description,
+        status: data.status,
+        progress: String(data.progress),
+        assigneeId: String(data.assigneeId),
+        departmentId: data.departmentId,
+        startDate: data.startDate,
+        dueDate: data.dueDate,
+      });
+    });
+  }, [accessToken, taskId]);
 
   function addFiles(newFiles) {
     if (!newFiles || newFiles.length === 0) {
       return;
     }
-    
+
     const validated = newFiles.map((file) => ({
       file: file,
-      errors: validationFile(file)
+      errors: validationFile(file),
     }));
 
     const validOnly = validated.filter((item) => item.errors.length === 0);
@@ -86,15 +132,31 @@ export default function TaskNew() {
   }
 
   function removeFiles(index) {
-    setFiles((prev) => prev.filter((_,i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
   const isValid = form.title.trim().length > 0;
+  const isTitleTooLong = form.title.length > 30;
 
   function handleSubmit() {
     if (!isValid) return;
-    setSubmitted(true);
-    setTimeout(() => navigate("/tasks"), 1600);
+
+    const data = {
+      title: form.title,
+      description: form.description,
+      status: form.status,
+      progress: Number(form.progress),
+      assigneeId: Number(form.assigneeId),
+      departmentId: form.departmentId,
+      startDate: form.startDate,
+      dueDate: form.dueDate,
+    };
+
+    updateTask(accessToken, taskId, data).then((res) => {
+      if (!res) return;
+      setSubmitted(true);
+      setTimeout(() => navigate(`/tasks/${taskId}`), 1600);
+    });
   }
 
   if (submitted) {
@@ -105,10 +167,10 @@ export default function TaskNew() {
             <CheckCircle size={40} className={s.successIconGlyph} />
           </div>
           <div>
-            <p className={s.successTitle}>작업이 등록되었습니다</p>
-            <p className={s.successDesc}>업무 보드로 이동합니다...</p>
+            <p className={s.successTitle}>업무가 수정되었습니다</p>
+            <p className={s.successDesc}>업무 목록으로 이동합니다...</p>
           </div>
-          <div className={s.successBadge}>업무 보드로 이동 중...</div>
+          <div className={s.successBadge}>업무 목록으로 이동 중...</div>
         </div>
       </div>
     );
@@ -129,34 +191,54 @@ export default function TaskNew() {
 
       <div className={s.layout}>
         <div className={`${s.col} ${s.colMain}`}>
-          <WSCard title="작업 기본 정보" subtitle="새로운 업무 항목의 기본 정보를 입력하세요">
+          <WSCard
+            title="작업 기본 정보"
+            subtitle="새로운 업무 항목의 기본 정보를 입력하세요"
+          >
             <div className={s.formGrid}>
-
               <div className={s.row2}>
                 <div>
-                  <label className={s.label}>
-                    담당자
-                  </label>
+                  <label className={s.label}>담당자</label>
                   <WSSelect
-                    placeholder="담당자 선택"
-                    value={form.assignee}
-                    onChange={(e) => setForm((p) => ({ ...p, assignee: e.target.value }))}
-                    options={TEAM_MEMBERS.map((m) => ({value: m.id, label: `${m.name} (${m.dept}, ${m.role})`}))}
+                    placeholder="담당자"
+                    value={form.assigneeId}
+                    onChange={(e) => {
+                      const selected = members.find(
+                        (m) => m.id === Number(e.target.value),
+                      );
+                      setForm((p) => ({
+                        ...p,
+                        assigneeId: Number(e.target.value),
+                        departmentId: selected?.departmentId ?? null,
+                      }));
+                    }}
+                    options={(role === "ADMIN"
+                      ? members.filter((m) => m.id !== myId)
+                      : members.filter(
+                          (m) =>
+                            m.departmentId === myDepartmentId && m.id !== myId,
+                        )
+                    ).map((m) => ({
+                      value: m.id,
+                      label: `${m.name} (${m.departmentName}, ${m.jobGrade})`,
+                    }))}
                   />
                 </div>
                 <div>
-                  <label className={s.label}>
-                    프로젝트 기간
-                  </label>
-                  <WSCalendarpicker 
-                    startValue={form.start_date}
-                    endValue={form.due_date}
-                    onStartChange={(e) => setForm((p) => ({ ...p, start_date: e.target.value }))}
-                    onEndChange={(e) => setForm((p) => ({ ...p, due_date: e.target.value }))}
+                  <label className={s.label}>프로젝트 기간</label>
+                  <WSCalendarpicker
+                    startValue={form.startDate}
+                    endValue={form.dueDate}
+                    onStartChange={(e) =>
+                      setForm((p) => ({ ...p, startDate: e.target.value }))
+                    }
+                    onEndChange={(e) =>
+                      setForm((p) => ({ ...p, dueDate: e.target.value }))
+                    }
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className={s.label}>
                   작업 제목 <span className={s.required}>*</span>
@@ -164,33 +246,52 @@ export default function TaskNew() {
                 <WSInput
                   placeholder="작업 제목을 입력하세요"
                   value={form.title}
-                  onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, title: e.target.value }))
+                  }
                   className={s.input}
                 />
+                {isTitleTooLong && (
+                  <p
+                    style={{ color: `red`, fontSize: `12px`, marginTop: `4px` }}
+                  >
+                    제목을 30자 이내로 입력해주세요.
+                  </p>
+                )}
               </div>
 
               <div className={s.row2}>
-                  <div>
-                    <label className={s.label}>상태</label>
-                    <WSSelect
-                      placeholder="상태 선택"
-                      value={form.status}
-                      onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
-                      options={STATUS_OPTIONS.map((m) => ({value: m.key, label: m.label}))}
-                      className={s.select}
-                    />
-                  </div>
-                  <div>
-                    <label className={s.label}>진행률</label>
-                    <WSSelect
-                      placeholder="진행률 선택"
-                      value={form.progress}
-                      onChange={(e) => setForm((p) => ({ ...p, progress: e.target.value }))}
-                      options={PROGRESS_OPTIONS.map((m) => ({value: m.key, label: m.label}))}
-                      className={s.select}
-                    />
-                  </div>
+                <div>
+                  <label className={s.label}>상태</label>
+                  <WSSelect
+                    placeholder="상태 선택"
+                    value={form.status}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, status: e.target.value }))
+                    }
+                    options={STATUS_OPTIONS.map((m) => ({
+                      value: m.key,
+                      label: m.label,
+                    }))}
+                    className={s.select}
+                  />
                 </div>
+                <div>
+                  <label className={s.label}>진행률</label>
+                  <WSSelect
+                    placeholder="진행률 선택"
+                    value={form.progress}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, progress: e.target.value }))
+                    }
+                    options={PROGRESS_OPTIONS.map((m) => ({
+                      value: m.key,
+                      label: m.label,
+                    }))}
+                    className={s.select}
+                  />
+                </div>
+              </div>
             </div>
           </WSCard>
 
@@ -200,15 +301,24 @@ export default function TaskNew() {
           >
             <div className={s.toolbar}>
               {TOOLBAR_ITEMS.map((btn, i) =>
-                btn === "|"
-                  ? <div key={i} className={s.toolbarSep} />
-                  : <button key={i} className={s.toolbarBtn}>{btn}</button>
+                btn === "|" ? (
+                  <div key={i} className={s.toolbarSep} />
+                ) : (
+                  <button key={i} className={s.toolbarBtn}>
+                    {btn}
+                  </button>
+                ),
               )}
             </div>
             <WSTextarea
               placeholder="작업에 대한 상세 설명을 입력하세요.&#10;예) 작업 배경, 목표, 완료 조건 등을 상세하게 기술해 주세요."
               value={form.description}
-              onChange={(e) => setForm((p) => ({ ...p, description: e.target.value.slice(0, 2000) }))}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  description: e.target.value.slice(0, 2000),
+                }))
+              }
               className={s.textarea}
             />
           </WSCard>
@@ -227,20 +337,23 @@ export default function TaskNew() {
             />
 
             <WSFileList
-              files={files.map(({file}) => file)}
+              files={files.map(({ file }) => file)}
               onRemove={removeFiles}
             />
           </WSCard>
 
           <div className={s.actionsCol}>
-            <WSButton 
+            <WSButton
               label="수정 등록"
               icon={<Pencil size={16} />}
               onClick={handleSubmit}
               disabled={!isValid}
               className={s.submitBtn}
             />
-            <button onClick={() => navigate("/tasks")} className={s.cancelBtn}>
+            <button
+              onClick={() => navigate(`/tasks/${taskId}`)}
+              className={s.cancelBtn}
+            >
               취소하고 돌아가기
             </button>
           </div>
