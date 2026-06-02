@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 import useAuthContext from "../../../store/AuthContext";
 import {
   Search,
@@ -96,6 +98,42 @@ export default function Messenger() {
     });
   }, [accessToken, activeConvId, my]);
 
+  // WebSocket 실시간 구독 — 채팅방 입장 시 해당 방 토픽 구독, 나가면 해제
+  useEffect(() => {
+    if (!activeConvId) return;
+
+    const client = new Client({
+      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      reconnectDelay: 5000,
+      onConnect: () => {
+        client.subscribe(`/topic/room/${activeConvId}`, (frame) => {
+          const msg = JSON.parse(frame.body);
+          setChatMessages((prev) => {
+            // 이미 있는 메시지면 무시 (중복 방지)
+            if (prev.some((m) => m.id === msg.id)) return prev;
+            return [
+              ...prev,
+              {
+                id: msg.id,
+                isMine: msg.senderId === my.id,
+                sender: {
+                  name: msg.senderName,
+                  avatar: msg.senderProfileImage,
+                },
+                content: msg.content,
+                time: msg.sentAt,
+                type: msg.msgType,
+              },
+            ];
+          });
+        });
+      },
+    });
+
+    client.activate();
+    return () => client.deactivate();
+  }, [activeConvId, my]);
+
   // 내 데이터 불러오기
   useEffect(() => {
     if (!accessToken) return;
@@ -184,21 +222,8 @@ export default function Messenger() {
     setMessage("");
 
     try {
+      // 전송만 하면 WebSocket 구독(/topic/room)으로 본인 포함 실시간 반영됨
       await sendMessage(accessToken, activeConvId, content);
-      // 전송 완료 후 메시지 목록 재조회
-      const data = await getMessages(accessToken, activeConvId);
-      const list = Array.isArray(data.data) ? data.data : [];
-
-      setChatMessages(
-        list.reverse().map((msg) => ({
-          id: msg.id,
-          isMine: msg.senderId === my.id ? true : false,
-          sender: { name: msg.senderName, avatar: msg.senderProfileImage },
-          content: msg.content,
-          time: msg.sentAt,
-          type: msg.msgType,
-        })),
-      );
     } catch (error) {
       console.log("메시지 전송 에러: " + error);
     }
