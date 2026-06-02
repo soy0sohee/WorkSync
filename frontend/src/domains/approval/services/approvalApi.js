@@ -12,6 +12,7 @@ export async function getMyInfo(accessToken) {
       return response.json();
     })
     .then((json) => {
+      console.log(json);
       return json.data;
     })
     .catch((error) => {
@@ -36,7 +37,8 @@ export async function getMyApprovals(accessToken, status = "all") {
       return response.json();
     })
     .then((json) => {
-      console.log("data :" + json.data);
+      console.log("응답 전체:", json);
+      console.log("data:", json.data);
       return json.data ?? [];
     })
     .catch((error) => {

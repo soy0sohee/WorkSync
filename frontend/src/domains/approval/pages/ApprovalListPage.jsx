@@ -11,23 +11,23 @@ import useAuthContext from "../../../store/AuthContext";
 import s from "./ApprovalListPage.module.css";
 
 const STATUS_CONFIG = {
-  pending: { label: "대기", bg: "#FEF3C7", text: "#92400E" },
-  approved: { label: "승인", bg: "#D1FAE5", text: "#065F46" },
-  rejected: { label: "반려", bg: "#FEE2E2", text: "#991B1B" },
+  IN_PROGRESS: { label: "대기", bg: "#FEF3C7", text: "#92400E" },
+  APPROVES: { label: "승인", bg: "#D1FAE5", text: "#065F46" },
+  REJECTED: { label: "반려", bg: "#FEE2E2", text: "#991B1B" },
 };
 
 const STATUS_OPTIONS = [
   { key: "all", label: "전체" },
   { key: "IN_PROGRESS", label: "대기" },
   { key: "REJECTED", label: "반려" },
-  { key: "APPROVES", label: "승인" },
+  { key: "APPROVED", label: "승인" },
 ];
 
 export default function Approval() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("all");
+  // const [statusFilter, setStatusFilter] = useState("all");
   const [status, setStatus] = useState("all");
   const navigate = useNavigate();
   const { accessToken } = useAuthContext();
@@ -81,7 +81,7 @@ export default function Approval() {
                 <button
                   key={item.key}
                   onClick={() => {
-                    setStatusFilter(item.key);
+                    setStatus(item.key);
                     setOpenDropdown(null);
                     setPage(1);
                   }}
@@ -113,7 +113,11 @@ export default function Approval() {
 
       <div className={s.grid}>
         {paginatedDocs.map((doc) => {
-          const config = STATUS_CONFIG[doc.status];
+          const config = STATUS_CONFIG[doc.status] ?? {
+            label: doc.status,
+            bg: "#E5E7EB",
+            text: "#374151",
+          };
           return (
             <div
               key={doc.id}
@@ -167,18 +171,17 @@ export default function Approval() {
               <h3 className={s.cardTitle}>{doc.title}</h3>
 
               <div className={s.requesterRow}>
-                <WSAvatar
-                  src={doc.requester.avatar}
-                  name={doc.requester.name}
-                  size={28}
-                />
-                <div>
-                  <p className={s.requesterName}>{doc.requester.name}</p>
-                  <p className={s.requesterRole}>{doc.requester.role}</p>
-                </div>
-              </div>
+                <WSAvatar src={null} name={doc.drafterName} size={28} />
 
-              <p className={s.cardDate}>{doc.date}</p>
+                <p className={s.requesterName}>{doc.drafterName}</p>
+              </div>
+              <hr className={s.divider} />
+              <div style={{ display: `flex`, justifyContent: `space-between` }}>
+                <p className={s.cardDate}>
+                  {new Date(doc.createdAt).toLocaleDateString("ko-KR")}
+                </p>
+                <p className={s.requesterRole}>{doc.formName}</p>
+              </div>
             </div>
           );
         })}
