@@ -40,7 +40,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestBody ReissueRequest request) {
 
-        authService.logout();
+        authService.logout(request);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }
