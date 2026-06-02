@@ -134,6 +134,7 @@ export default function TaskNew() {
   }
 
   const isValid = form.title.trim().length > 0;
+  const isTitleTooLong = form.title.length > 30;
 
   function handleSubmit() {
     if (!isValid) return;
@@ -245,6 +246,13 @@ export default function TaskNew() {
                   }
                   className={s.input}
                 />
+                {isTitleTooLong && (
+                  <p
+                    style={{ color: `red`, fontSize: `12px`, marginTop: `4px` }}
+                  >
+                    제목을 30자 이내로 입력해주세요.
+                  </p>
+                )}
               </div>
 
               <div className={s.row2}>

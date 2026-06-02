@@ -74,21 +74,21 @@ export default function TaskNew() {
     });
   }, [accessToken]);
 
-  function validationFile(file) {
-    const errors = [];
-    const ext = "." + file.name.split(".").pop().toLowerCase();
+  // function validationFile(file) {
+  //   const errors = [];
+  //   const ext = "." + file.name.split(".").pop().toLowerCase();
 
-    // 확장자 검사
-    if (!ALLOWED_EXT.includes(ext)) {
-      errors.push("허용하지 않은 확장자입니다.");
-    }
-    // 용량 검사
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      errors.push(`파일 크기가 ${MAX_SIZE_MB}MB를 초과했습니다.`);
-    }
+  //   // 확장자 검사
+  //   if (!ALLOWED_EXT.includes(ext)) {
+  //     errors.push("허용하지 않은 확장자입니다.");
+  //   }
+  //   // 용량 검사
+  //   if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+  //     errors.push(`파일 크기가 ${MAX_SIZE_MB}MB를 초과했습니다.`);
+  //   }
 
-    return errors;
-  }
+  //   return errors;
+  // }
 
   function addFiles(newFiles) {
     if (!newFiles || newFiles.length === 0) {
@@ -118,6 +118,7 @@ export default function TaskNew() {
   }
 
   const isValid = form.title.trim().length > 0;
+  const isTitleTooLong = form.title.length > 30;
 
   function handleSubmit() {
     if (!isValid) return;
@@ -229,6 +230,17 @@ export default function TaskNew() {
                   }
                   className={s.input}
                 />
+                {isTitleTooLong && (
+                  <p
+                    style={{
+                      color: `red`,
+                      fontSize: `12px`,
+                      marginTop: `4px`,
+                    }}
+                  >
+                    제목을 30자 이내로 입력해주세요.
+                  </p>
+                )}
               </div>
 
               <div className={s.row2}>
