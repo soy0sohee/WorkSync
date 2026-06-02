@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Upload, User, Send, Paperclip } from "lucide-react";
 import {
@@ -10,8 +11,8 @@ import {
   WSFormField,
   WSSelect,
   WSTextarea,
-  WSFileUploadZone,
   WSDatepicker,
+  WSFileUploadZone,
   WSFileList,
 } from "../../../components/common/FormComponents";
 import s from "../pages/EmployeeCreatePage.module.css";
@@ -46,6 +47,26 @@ export default function EmployeeForm({
   pageTitle,
 }) {
   const navigate = useNavigate();
+
+  // 파일 업로드
+  const [files, setFiles] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // 파일 추가
+  export const addFiles = (newFiles) => {
+    const mapfiles = newFiles.map((file) => ({ file })); //fileLise에서 객체 배열로 전달하기위해
+    setFiles((prev) => [...prev, ...mapfiles]);
+
+    const fileData = new FromData();
+
+    fileData.append("file", files);
+    fileData.append("refType", "ORGANIZATION");
+  };
+
+  // 파일 삭제
+  export const removeFiles = (indexToRemove) => {
+    setFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
 
   // 입력폼 형식 오류 메시지
   const errors = {
@@ -244,20 +265,20 @@ export default function EmployeeForm({
 
         <div>
           <WSCard title="프로필 이미지" className={`${s.card} ${s.colSide}`}>
-            {/* <WSFileUploadZone
+            <WSFileUploadZone
               onFilesAdded={addFiles}
               isDragging={isDragging}
               onDragStateChange={setIsDragging}
               icon={<Paperclip size={28} />}
-              accept=".jpg, ,png"
+              accept=".jpg, .png"
               label="파일을 드래그하거나 클릭하여 업로드"
               helperText="JPG, PNG - 최대 50MB"
             />
 
             <WSFileList
-              files={files.map(({ file }) => file)}
+              files={files.map(({ file }) => file)} //file 형태 객체 배열로 전달
               onRemove={removeFiles}
-            /> */}
+            />
           </WSCard>
 
           <div className={s.actionsCol}>

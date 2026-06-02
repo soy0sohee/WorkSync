@@ -5,7 +5,7 @@ import {
   getDepartments,
   createEmployee,
 } from "../services/organizationListApi";
-import EmployeeForm from "../components/EmployeeForm";
+import { fileApi } from "../../file/services/fileApi";
 import { WSSuccessScreen } from "../../../components/common/LayoutComponents";
 
 export default function EmployeeAdd() {

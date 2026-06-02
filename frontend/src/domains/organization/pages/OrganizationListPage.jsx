@@ -17,6 +17,7 @@ import {
 } from "../../../components/common/LayoutComponents";
 import style from "./OrganizationListPage.module.css";
 import DeptModal from "../components/DeptModal";
+import { getMyInfo } from "../../../components/service/TopBarApi";
 import {
   getDepartments,
   getEmployee,
@@ -29,7 +30,7 @@ const TH_COL = ["부서명", "직급", "이름", "이메일", "연락처", "입�
 const GRID_TEMPLATE = "1fr 1fr 1fr 1fr 1fr 1fr";
 
 export default function OrganizationListPage() {
-  const { accessToken, role } = useAuthContext();
+  const { accessToken } = useAuthContext();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
@@ -41,6 +42,16 @@ export default function OrganizationListPage() {
   const [editDeptName, setEditDeptName] = useState("");
   const [editDeptId, setEditDeptId] = useState("");
   const [modalView, setModalView] = useState("dept");
+  const [myRole, setMyRole] = useState("");
+
+  // 사용자 데이터 불러오기
+  useEffect(() => {
+    if (!accessToken) return;
+    getMyInfo(accessToken).then((data) => {
+      // console.log(data);
+      setMyRole(data.data.role);
+    });
+  }, [accessToken]);
 
   // 부서 불러오기
   useEffect(() => {
@@ -168,7 +179,7 @@ export default function OrganizationListPage() {
         onSearchChange={setSearch}
         searchPlaceholder="부서 또는 이름으로 검색하세요."
         actions={
-          role === "ADMIN"
+          myRole === "ADMIN"
             ? [
                 {
                   label: "부서 관리",
@@ -199,12 +210,12 @@ export default function OrganizationListPage() {
           </div>
         ) : (
           paginatedData.map((item, index) => (
-            <WSTableRow key={index} gridTemplate={GRID_TEMPLATE}>
+            <WSTableRow key={item.id} gridTemplate={GRID_TEMPLATE}>
               <p className={style.dept}>
                 {item.departmentName ? item.departmentName : "-"}
               </p>
               <p className={style.rank}>{JOB_GRADE[item.jobGrade] || "-"}</p>
-              {role === "ADMIN"
+              {myRole === "ADMIN"
                 ? [
                     <div
                       className={style.nameCell}
