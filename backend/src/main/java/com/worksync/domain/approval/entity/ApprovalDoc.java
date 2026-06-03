@@ -46,6 +46,7 @@ public class ApprovalDoc {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "doc", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ApprovalLine> approvalLines = new ArrayList<>();
