@@ -82,7 +82,7 @@ public class ApprovalService {
 
         approvalDocRepository.save(doc);
 
-        // 결재선 생성 — doc 컬렉션에 직접 추가 (cascade로 저장됨)
+        // 결재선 생성 — doc 컬렉션에 직접 추가
         for (ApprovalCreateRequest.ApprovalLineRequest lineReq : request.getApprovalLines()) {
             Employee approver = employeeRepository.findById(lineReq.getApproverId())
                     .orElseThrow(() -> new CustomException(ErrorCode.EMPLOYEE_NOT_FOUND));
@@ -185,6 +185,14 @@ public class ApprovalService {
             throw new CustomException(ErrorCode.NOT_YOUR_APPROVAL);
         }
         if (doc.getStatus() != ApprovalDocStatus.IN_PROGRESS) {
+            throw new CustomException(ErrorCode.ALREADY_PROCESSED);
+        }
+
+        // 이미 승인한 경우 수정 불가
+        boolean alreadyStarted = doc.getApprovalLines().stream()
+                .filter(l -> l.getStepType() == StepType.REVIEW || l.getStepType() == StepType.APPROVE)
+                .anyMatch(l -> l.getStatus() == ApprovalLineStatus.APPROVED);
+        if (alreadyStarted) {
             throw new CustomException(ErrorCode.ALREADY_PROCESSED);
         }
 
