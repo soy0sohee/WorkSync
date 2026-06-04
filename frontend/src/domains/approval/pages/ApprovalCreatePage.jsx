@@ -1,5 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getForms } from "../services/approvalApi";
+import useAuthContext from "../../../store/AuthContext";
 import {
   ArrowLeft,
   X,
@@ -68,6 +70,16 @@ export default function ApprovalNew() {
   const [department, setDepartment] = useState("");
   const [content, setContent] = useState("");
   const [showTemplate, setShowTemplate] = useState(false);
+  const [templates, setTemplates] = useState(false);
+  const [selectedForm, setSelectedForm] = useState(null);
+  const [formValues, setFormValues] = useState({});
+  const { accessToken } = useAuthContext();
+
+  useEffect(() => {
+    if (!accessToken) return;
+
+    getForms(accessToken).then((data) => setTemplates(data ?? []));
+  }, [accessToken]);
 
   const [approvers, setApprovers] = useState([
     { id: "a1", member: TEAM_MEMBERS[0], role: "최종 결재자" },
@@ -173,11 +185,7 @@ export default function ApprovalNew() {
             <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className={s.pageTitle}>새 결재 문서 등록</h1>
-            <p className={s.pageBreadcrumb}>
-              홈 &nbsp;/&nbsp; 전자결재 &nbsp;/&nbsp;
-              <span className={s.bcCurrent}>새 문서</span>
-            </p>
+            <h1 className={s.pageTitle}>{selectedForm.formName}</h1>
           </div>
         </div>
 
@@ -198,7 +206,7 @@ export default function ApprovalNew() {
               <div className={s.tplMenuHeader}>
                 <p className={s.tplMenuLabel}>결재 양식 선택</p>
               </div>
-              {MOCK_TEMPLATES.map((tpl) => (
+              {templates.map((tpl) => (
                 <button
                   key={tpl.id}
                   className={s.tplItem}
@@ -207,6 +215,8 @@ export default function ApprovalNew() {
                     setTitle(
                       tpl.name + " - " + new Date().toLocaleDateString("ko-KR"),
                     );
+                    setSelectedForm(tpl);
+                    setFormValues({});
                     setShowTemplate(false);
                   }}
                   type="button"
@@ -214,8 +224,8 @@ export default function ApprovalNew() {
                 >
                   <FileText size={14} color="#9CA3AF" />
                   <div>
-                    <p className={s.tplItemName}>{tpl.name}</p>
-                    <p className={s.tplItemType}>{tpl.type}</p>
+                    <p className={s.tplItemName}>{tpl.formName}</p>
+                    <p className={s.tplItemType}>{tpl.formType}</p>
                   </div>
                 </button>
               ))}
@@ -223,13 +233,6 @@ export default function ApprovalNew() {
           )}
         </div>
       </div>
-
-      {saved && (
-        <div className={s.savedAlert}>
-          <CheckCircle size={15} color="#10B981" />
-          <span>임시 저장되었습니다. 목록의 임시보관함에서 확인하세요.</span>
-        </div>
-      )}
 
       <div className={s.layout}>
         <div className={`${s.col} ${s.colMain}`}>
@@ -327,42 +330,34 @@ export default function ApprovalNew() {
               </div>
             </div>
           </WSCard>
-
-          <WSCard
-            title="문서 내용"
-            subtitle="결재 문서의 상세 내용을 작성하세요"
-            action={
-              <span className={s.headerCount}>{content.length} / 2000자</span>
-            }
-          >
-            <div className={s.toolbar}>
-              {[
-                "굵게",
-                "기울임",
-                "밑줄",
-                "|",
-                "목록",
-                "번호목록",
-                "|",
-                "표 삽입",
-                "링크",
-              ].map((btn, i) =>
-                btn === "|" ? (
-                  <div key={i} className={s.toolbarSep} />
-                ) : (
-                  <button key={i} className={s.toolbarBtn}>
-                    {btn}
-                  </button>
-                ),
-              )}
-            </div>
-            <textarea
-              placeholder="결재 문서의 상세 내용을 작성하세요.&#10;&#10;예) 요청 배경, 목적, 예산 내역, 기대 효과 등을 상세하게 기술해 주세요."
-              value={content}
-              onChange={(e) => setContent(e.target.value.slice(0, 2000))}
-              className={s.textarea}
-            />
-          </WSCard>
+          {selectedForm && (
+            <WSCard
+              title={selectedForm.formName}
+              subtitle="양식 내용을 입력하세요"
+            >
+              <div className={s.formGrid}>
+                {JSON.parse(selectedForm.formSchema).fields.map((field) => {
+                  return (
+                    <div key={field.key}>
+                      <label className={s.label}>{field.label}</label>
+                      <input
+                        type="text"
+                        placeholder={`${field.label}을 입력하세요`}
+                        value={formValues[field.key] ?? ""}
+                        onChange={(e) =>
+                          setFormValues((prev) => ({
+                            ...prev,
+                            [field.key]: e.target.value,
+                          }))
+                        }
+                        className={s.input}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </WSCard>
+          )}
 
           <WSCard
             title="첨부 파일"
