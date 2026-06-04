@@ -5,8 +5,8 @@ import {
   getDepartments,
   createEmployee,
 } from "../services/organizationListApi";
-import { fileApi } from "../../file/services/fileApi";
 import { WSSuccessScreen } from "../../../components/common/LayoutComponents";
+import EmployeeForm from "../components/EmployeeForm";
 
 export default function EmployeeAdd() {
   const { accessToken } = useAuthContext();

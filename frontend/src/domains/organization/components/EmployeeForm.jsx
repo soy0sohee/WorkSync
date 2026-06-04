@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useAuthContext from "../../../store/AuthContext";
 import { ArrowLeft, Upload, User, Send, Paperclip } from "lucide-react";
 import {
   WSAvatar,
@@ -15,6 +16,7 @@ import {
   WSFileUploadZone,
   WSFileList,
 } from "../../../components/common/FormComponents";
+import { uploadFile } from "../../file/services/fileApi";
 import s from "../pages/EmployeeCreatePage.module.css";
 
 // 직급
@@ -46,6 +48,7 @@ export default function EmployeeForm({
   textBtnLabel,
   pageTitle,
 }) {
+  const { accessToken } = useAuthContext();
   const navigate = useNavigate();
 
   // 파일 업로드
@@ -53,18 +56,19 @@ export default function EmployeeForm({
   const [isDragging, setIsDragging] = useState(false);
 
   // 파일 추가
-  export const addFiles = (newFiles) => {
+  const addFiles = (newFiles) => {
     const mapfiles = newFiles.map((file) => ({ file })); //fileLise에서 객체 배열로 전달하기위해
     setFiles((prev) => [...prev, ...mapfiles]);
 
-    const fileData = new FromData();
+    // FormData형식으로 fileData 추가
+    const fileData = new FormData();
+    newFiles.forEach((file) => fileData.append("file", file));
 
-    fileData.append("file", files);
-    fileData.append("refType", "ORGANIZATION");
+    uploadFile(accessToken, fileData, "ORGANIZATION");
   };
 
   // 파일 삭제
-  export const removeFiles = (indexToRemove) => {
+  const removeFiles = (indexToRemove) => {
     setFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
