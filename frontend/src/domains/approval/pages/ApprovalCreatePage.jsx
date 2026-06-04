@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMyInfo, getForms, getEmployees } from "../services/approvalApi";
 import useAuthContext from "../../../store/AuthContext";
+import ApprovalFormPanel from "../components/ApprovalFormPanel";
 import {
   ArrowLeft,
   X,
@@ -159,8 +160,9 @@ export default function ApprovalNew() {
       approvalLines: approvers.map((a, idx) => ({
         approverId: a.member.id,
         stepOrder: idx + 1,
-        stepType: formValues,
+        stepType: a.role,
       })),
+      items: formValues,
     };
 
     const result = await createApproval(accessToken, body);
@@ -340,35 +342,11 @@ export default function ApprovalNew() {
               </div>
             </div>
           </WSCard>
-          {selectedForm && (
-            <WSCard
-              title={selectedForm.formName}
-              subtitle="양식 내용을 입력하세요"
-            >
-              <div className={s.formGrid}>
-                {JSON.parse(selectedForm.formSchema).fields.map((field) => {
-                  return (
-                    <div key={field.key}>
-                      <label className={s.label}>{field.label}</label>
-                      <input
-                        type="text"
-                        placeholder={`${field.label}을 입력하세요`}
-                        value={formValues[field.key] ?? ""}
-                        onChange={(e) =>
-                          setFormValues((prev) => ({
-                            ...prev,
-                            [field.key]: e.target.value,
-                          }))
-                        }
-                        className={s.input}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </WSCard>
-          )}
-
+          <ApprovalFormPanel
+            selectedForm={selectedForm}
+            formValues={formValues}
+            setFormValues={setFormValues}
+          />
           <WSCard
             title="첨부 파일"
             subtitle={`${attachments.length}개 파일 첨부됨`}
