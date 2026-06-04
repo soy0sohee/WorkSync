@@ -76,4 +76,35 @@ public class Employee {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public void update(String name, String phone, JobGrade jobGrade, EmployeeRole role,
+                       Department department, String email, LocalDate hireDate, String profileImage, String encodedPassword) {
+        if (name != null) this.name = name;
+        if (phone != null) this.phone = phone;
+        if(email != null) this.email = email;
+        if (jobGrade != null) this.jobGrade = jobGrade;
+        if (role != null) this.role = role;
+        if (department != null) this.department = department;
+        if(hireDate != null) this.hireDate = hireDate;
+        if (profileImage != null) this.profileImage = profileImage;
+        if (encodedPassword != null) this.password = encodedPassword;
+    }
+
+    public void changeStatus(EmployeeStatus status) {
+        this.status = status;
+    }
+
+    // 로그인 실패 횟수 증가 — maxFails 이상이면 lockMinutes 분간 계정 잠금
+    public void incrementLoginFailCount(int maxFails, int lockMinutes) {
+        this.loginFailCount++;
+        if (this.loginFailCount >= maxFails) {
+            this.lockedUntil = LocalDateTime.now().plusMinutes(lockMinutes);
+        }
+    }
+
+    // 로그인 성공 시 실패 횟수 및 잠금 초기화
+    public void resetLoginFailCount() {
+        this.loginFailCount = 0;
+        this.lockedUntil = null;
+    }
 }

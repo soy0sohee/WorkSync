@@ -1,5 +1,6 @@
 package com.worksync.domain.employee.dto;
 
+import com.worksync.domain.employee.entity.EmployeeRole;
 import com.worksync.domain.employee.entity.JobGrade;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -30,6 +31,7 @@ public class EmployeeCreateRequest {
     @NotNull
     private JobGrade jobGrade;
 
+    private EmployeeRole role;
     private Long departmentId;
     private String profileImage;
     private LocalDate hireDate;
