@@ -41,7 +41,14 @@ public class ChatRoom {
     @Builder.Default
     private List<Message> messages = new ArrayList<>();
 
+    @Column(name = "last_message_at")
+    private LocalDateTime lastMessageAt;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public void updateLastMessageAt(LocalDateTime time) {
+        this.lastMessageAt = time;
+    }
 }
