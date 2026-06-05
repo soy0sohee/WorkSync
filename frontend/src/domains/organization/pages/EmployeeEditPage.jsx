@@ -9,6 +9,8 @@ import {
 } from "../services/organizationListApi";
 import EmployeeForm from "../components/EmployeeForm";
 import { WSSuccessScreen } from "../../../components/common/LayoutComponents";
+import useFileUpload from "../../../hooks/useFileUpload";
+import { getFile } from "../../file/services/fileApi";
 
 export default function EmployeeEdit() {
   const { id } = useParams();
@@ -29,10 +31,37 @@ export default function EmployeeEdit() {
     hireDate: "",
   });
 
+  // 파일 선언
+  const {
+    files,
+    setFiles,
+    isDragging,
+    setIsDragging,
+    uploadUrls,
+    addFiles,
+    removeFiles,
+    clearFiles,
+  } = useFileUpload(accessToken, "ORGANIZATION", id);
+
+  // 파일 데이터 불러오기
+  useEffect(() => {
+    if (!accessToken || !id) return;
+    getFile(accessToken, "ORGANIZATION", id).then((data) => {
+      const fileList = Array.isArray(data.data) ? data.data : [];
+      setFiles(
+        fileList.map((f) => ({
+          file: {
+            name: f.originalName,
+            size: f.fileSize,
+          },
+        })),
+      );
+    });
+  }, [accessToken, id]);
+
   // 직원 데이터 불러오기
   useEffect(() => {
     if (!accessToken || !id) return;
-    console.log(id);
     getEmployeeById(accessToken, id).then((data) => {
       setForm(data.data);
     });
@@ -68,13 +97,21 @@ export default function EmployeeEdit() {
   // 저장
   async function handleSubmit() {
     try {
-      await editEmployee(accessToken, id, form);
+      await editEmployee(accessToken, id, {
+        ...form,
+        profileImage: uploadUrls[0] ?? null,
+      });
+      navigate("/organization");
     } catch (error) {
-      console.log("저장 실패: " + error);
-      alert("저장에 실패했습니다.");
+      removeFiles();
+      if (error.response?.status === 409) {
+        alert("이미 존재하는 이메일 또는 사번입니다.");
+        return;
+      } else {
+        console.log("저장실패: " + error);
+      }
     }
     setSubmitted(true);
-    navigate("/organization");
   }
 
   // 삭제
@@ -120,6 +157,11 @@ export default function EmployeeEdit() {
         submitLabel="직원 수정"
         textBtnLabel="삭제하기"
         pageTitle="직원 수정"
+        files={files}
+        isDragging={isDragging}
+        setIsDragging={setIsDragging}
+        addFiles={addFiles}
+        removeFiles={removeFiles}
       />
     </>
   );

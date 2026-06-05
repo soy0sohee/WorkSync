@@ -16,7 +16,6 @@ import {
   WSFileList,
 } from "../../../components/common/FormComponents";
 import s from "../pages/EmployeeCreatePage.module.css";
-import useFileUpload from "../../../hooks/useFileUpload";
 
 // 직급
 const JOB_GRADE_OPTIONS = [
@@ -262,7 +261,6 @@ export default function EmployeeForm({
               label="파일을 드래그하거나 클릭하여 업로드"
               helperText="JPG, PNG - 최대 50MB"
             />
-
             <WSFileList
               files={files.map(({ file }) => file)} //화면에 파일 리스트 보여줌
               onRemove={removeFiles}

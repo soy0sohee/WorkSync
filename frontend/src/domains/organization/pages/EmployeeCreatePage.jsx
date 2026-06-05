@@ -71,16 +71,24 @@ export default function EmployeeAdd() {
     try {
       await createEmployee(accessToken, {
         ...form,
-        profileImage: uploadUrls[0],
+        profileImage: uploadUrls[0] ?? null,
       });
+
+      // DB 저장
+      await uploadFile(accessToken, fileData, refType);
+
       clearFiles();
+      navigate("/organization");
     } catch (error) {
-      console.log("저장 실패: " + error);
-      alert("저장에 실패했습니다.");
-      clearFiles();
+      removeFiles();
+      if (error.response?.status === 409) {
+        alert("이미 존재하는 이메일 또는 사번입니다.");
+        return;
+      } else {
+        console.log("저장실패: " + error);
+      }
     }
     setSubmitted(true);
-    navigate("/organization");
   }
 
   // 취소
@@ -115,7 +123,6 @@ export default function EmployeeAdd() {
         files={files}
         isDragging={isDragging}
         setIsDragging={setIsDragging}
-        uploadUrls={uploadUrls}
         addFiles={addFiles}
         removeFiles={removeFiles}
       />
