@@ -60,26 +60,31 @@ export default function EmployeeAdd() {
     files,
     isDragging,
     setIsDragging,
-    uploadUrls,
+    uploadedFile,
     addFiles,
     removeFiles,
     clearFiles,
   } = useFileUpload(accessToken, "ORGANIZATION");
 
-  // 저장
+  // 폼 저장
   async function handleSubmit() {
     try {
-      await createEmployee(accessToken, {
-        ...form,
-        profileImage: uploadUrls[0] ?? null,
+      // 직원 저장
+      await createEmployee(accessToken, form);
+      const employeeId = response.data.id;
+
+      // 파일 저장
+      await uploadFile(accessToken, {
+        ...uploadedFile,
+        refType: "ORGANIZATION",
+        refId: employeeId,
       });
 
-      // DB 저장
-      await uploadFile(accessToken, fileData, refType);
-
+      // 파일 초기화
       clearFiles();
       navigate("/organization");
     } catch (error) {
+      // 파일 삭제
       removeFiles();
       if (error.response?.status === 409) {
         alert("이미 존재하는 이메일 또는 사번입니다.");
