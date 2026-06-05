@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { uploadFile, deleteFile } from "../domains/file/services/FileApi";
+import {
+  uploadFile,
+  deleteFile,
+  deleteFormStorage,
+} from "../domains/file/services/FileApi";
 
 export default function useFileUpload(accessToken, refType) {
   const [files, setFiles] = useState([]); //파일 목록
@@ -25,12 +29,10 @@ export default function useFileUpload(accessToken, refType) {
   // 파일 삭제
   const removeFiles = async (index) => {
     const targetFile = files[index];
-    if (targetFile?.data.fileId !== undefined) {
-      // DB 삭제
-      await deleteFile(accessToken, targetFile.data.fileId);
-    } else {
-      // 스토리지 삭제
-      await deleteFile(accessToken, targetFile.data.url);
+
+    if (targetFile?.fileId !== undefined) {
+      // DB + 스토리지 삭제
+      await deleteFile(accessToken, targetFile.refType, targetFile.refId);
     }
 
     // 화면에 파일 제거

@@ -85,18 +85,18 @@ export default function EmployeeAdd() {
       });
 
       // 파일 초기화
-      clearFiles();
+      clearFiles;
       setSubmitted(true);
       navigate("/organization");
     } catch (error) {
       if (error.response?.status === 409) {
         // 파일 초기화
-        clearFiles();
+        clearFiles;
         alert("이미 존재하는 이메일 또는 사번입니다.");
         return;
       } else {
         // 파일 초기화
-        clearFiles();
+        clearFiles;
         console.log("저장실패: " + error);
         return;
       }

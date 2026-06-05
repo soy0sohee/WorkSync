@@ -70,7 +70,8 @@ export default function EmployeeEdit() {
             size: f.fileSize,
           },
           url: f.filePath,
-          fileId: f.id,
+          refType: f.refType,
+          refId: f.refId,
         })),
       );
     });
@@ -126,11 +127,11 @@ export default function EmployeeEdit() {
       });
 
       // 파일 초기화
-      clearFiles();
+      clearFiles;
       setSubmitted(true);
       navigate("/organization");
     } catch (error) {
-      removeFiles();
+      removeFiles;
       if (error.response?.status === 409) {
         alert("이미 존재하는 이메일 또는 사번입니다.");
         return;
@@ -152,8 +153,8 @@ export default function EmployeeEdit() {
 
     try {
       await deleteEmployee(accessToken, id);
-      clearFiles();
-      removeFiles();
+      clearFiles;
+      removeFiles;
       navigate("/organization");
     } catch (error) {
       console.log("저장 실패: " + error);
