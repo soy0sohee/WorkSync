@@ -52,7 +52,7 @@ export default function EmployeeEdit() {
     setFiles,
     isDragging,
     setIsDragging,
-    uploadUrls,
+    uploadedFile,
     addFiles,
     removeFiles,
     clearFiles,
@@ -63,6 +63,8 @@ export default function EmployeeEdit() {
     if (!accessToken || !id) return;
     getFile(accessToken, "ORGANIZATION", id).then((data) => {
       const fileList = Array.isArray(data.data) ? data.data : [];
+      console.log(fileList);
+
       setFiles(
         fileList.map((f) => ({
           file: {
@@ -113,25 +115,29 @@ export default function EmployeeEdit() {
   async function handleSubmit() {
     try {
       // 직원 저장
-      const response = await editEmployee(accessToken, {
+      const response = await editEmployee(accessToken, id, {
         ...form,
-        profileImage: uploadedFile.filePath ?? null,
+        profileImage: uploadedFile?.filePath ?? null,
       });
       const employeeId = response.data.id;
 
-      // 파일 저장
-      await saveFile(accessToken, {
-        ...uploadedFile,
-        refType: "ORGANIZATION",
-        refId: employeeId,
-      });
+      // 파일 경로가 있으면 파일 저장
+      if (uploadedFile?.filePath) {
+        // 파일 저장
+        await saveFile(accessToken, {
+          ...uploadedFile,
+          refType: "ORGANIZATION",
+          refId: employeeId,
+        });
 
-      // 파일 초기화
-      clearFiles;
+        // 파일 초기화
+        clearFiles();
+      }
+
       setSubmitted(true);
       navigate("/organization");
     } catch (error) {
-      removeFiles;
+      removeFiles();
       if (error.response?.status === 409) {
         alert("이미 존재하는 이메일 또는 사번입니다.");
         return;

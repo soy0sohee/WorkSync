@@ -8,7 +8,7 @@ import {
 import { WSSuccessScreen } from "../../../components/common/LayoutComponents";
 import useFileUpload from "../../../hooks/useFileUpload";
 import EmployeeForm from "../components/EmployeeForm";
-import { saveFile } from "../../file/services/FileApi";
+import { saveFile, deleteFile } from "../../file/services/FileApi";
 
 export default function EmployeeAdd() {
   const { accessToken } = useAuthContext();
@@ -73,30 +73,33 @@ export default function EmployeeAdd() {
       // 직원 저장
       const response = await createEmployee(accessToken, {
         ...form,
-        profileImage: uploadedFile.filePath ?? null,
+        profileImage: uploadedFile?.filePath ?? null,
       });
       const employeeId = response.data.id;
 
-      // 파일 저장
-      await saveFile(accessToken, {
-        ...uploadedFile,
-        refType: "ORGANIZATION",
-        refId: employeeId,
-      });
+      if (uploadedFile?.filePath) {
+        // 파일 저장
+        await saveFile(accessToken, {
+          ...uploadedFile,
+          refType: "ORGANIZATION",
+          refId: employeeId,
+        });
 
-      // 파일 초기화
-      clearFiles;
+        // 파일 초기화
+        clearFiles();
+      }
+
       setSubmitted(true);
       navigate("/organization");
     } catch (error) {
       if (error.response?.status === 409) {
         // 파일 초기화
-        clearFiles;
+        clearFiles();
         alert("이미 존재하는 이메일 또는 사번입니다.");
         return;
       } else {
         // 파일 초기화
-        clearFiles;
+        clearFiles();
         console.log("저장실패: " + error);
         return;
       }
