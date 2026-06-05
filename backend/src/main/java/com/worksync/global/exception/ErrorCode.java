@@ -52,6 +52,7 @@ public enum ErrorCode {
     // 연차 / 휴가
     LEAVE_REQUEST_NOT_FOUND(404, "존재하지 않는 휴가 신청입니다."),
     INSUFFICIENT_LEAVE_BALANCE(400, "연차 잔여일수가 부족합니다."),
+    LEAVE_BALANCE_NOT_FOUND(404, "연차 정보를 찾을 수 없습니다."),
 
     // 근태 기록
     ATTENDANCE_NOT_FOUND(404, "근태 기록이 존재하지 않습니다."),
