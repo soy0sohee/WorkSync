@@ -76,12 +76,15 @@ export async function deleteFile(accessToken, fileId) {
 }
 
 export async function deleteFormStorage(accessToken, filePath) {
-  return await fetch(`${BASE_URL}/files/${filePath}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
+  return await fetch(
+    `${BASE_URL}/files/delete?filePath=${encodeURIComponent(filePath)}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     },
-  })
+  )
     .then((response) => {
       return response.json();
     })
