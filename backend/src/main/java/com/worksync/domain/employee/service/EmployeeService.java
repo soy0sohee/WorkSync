@@ -1,5 +1,6 @@
 package com.worksync.domain.employee.service;
 
+import com.worksync.domain.audit.service.AuditLogService;
 import com.worksync.domain.department.entity.Department;
 import com.worksync.domain.department.repository.DepartmentRepository;
 import com.worksync.domain.employee.dto.EmployeeCreateRequest;
@@ -32,19 +33,25 @@ public class EmployeeService {
     private final DepartmentRepository departmentRepository;
     private final PasswordEncoder passwordEncoder;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AuditLogService auditLogService;
+
+    // 감사 로그 카테고리 / 액션명
+    private static final String CATEGORY_HR = "HR";
+    private static final String ACTION_HIRE = "입사 등록";
+    private static final String ACTION_RESIGN = "퇴사 처리";
 
     // 직원 목록 조회 (이름·부서·상태 필터링)
     public List<EmployeeResponse> getEmployees(String name, Long departmentId, EmployeeStatus status) {
         Specification<Employee> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (name != null && !name.isBlank()) {
+            if(name != null && !name.isBlank()) {
                 predicates.add(cb.like(root.get("name"), "%" + name + "%"));
             }
-            if (departmentId != null) {
+            if(departmentId != null) {
                 predicates.add(cb.equal(root.get("department").get("id"), departmentId));
             }
-            if (status != null) {
+            if(status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
             }
 
@@ -72,7 +79,7 @@ public class EmployeeService {
 
     // 직원 등록 (ADMIN)
     @Transactional
-    public EmployeeResponse createEmployee(EmployeeCreateRequest request) {
+    public EmployeeResponse createEmployee(EmployeeCreateRequest request, Long actorId) {
         if (employeeRepository.existsByEmail(request.getEmail())) {
             throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         }
@@ -99,7 +106,14 @@ public class EmployeeService {
                 .hireDate(request.getHireDate())
                 .build();
 
-        return EmployeeResponse.from(employeeRepository.save(employee));
+        Employee saved = employeeRepository.save(employee);
+
+        // 감사 로그 — 입사 등록 (actor=등록 관리자, target=신규 직원)
+        String actorName = employeeRepository.findById(actorId)
+                .map(Employee::getName).orElse(null);
+        auditLogService.log(actorId, actorName, ACTION_HIRE, CATEGORY_HR, saved.getId(), null, null);
+
+        return EmployeeResponse.from(saved);
     }
 
     @Transactional
@@ -141,7 +155,7 @@ public class EmployeeService {
     }
 
     @Transactional
-    public EmployeeResponse updateMyStatus(Long id, EmployeeStatus status) {
+    public EmployeeResponse updateMyStatus(Long id, EmployeeStatus status, Long actorId) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.EMPLOYEE_NOT_FOUND));
         employee.changeStatus(status);
@@ -150,6 +164,13 @@ public class EmployeeService {
         messagingTemplate.convertAndSend(
                 "/topic/status",
                 Map.of("employeeId", employee.getId(), "status", status));
+
+        // 감사 로그 — 퇴사 처리 (INACTIVE 전환 시에만 기록)
+        if (status == EmployeeStatus.INACTIVE) {
+            String actorName = employeeRepository.findById(actorId)
+                    .map(Employee::getName).orElse(null);
+            auditLogService.log(actorId, actorName, ACTION_RESIGN, CATEGORY_HR, employee.getId(), null, null);
+        }
 
         return EmployeeResponse.from(employee);
     }

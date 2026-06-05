@@ -55,10 +55,11 @@ public class EmployeeController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<EmployeeResponse>> createEmployee(
-            @RequestBody @Valid EmployeeCreateRequest request) {
+            @RequestBody @Valid EmployeeCreateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         return ResponseEntity.status(201).body(ApiResponse.created(
-                employeeService.createEmployee(request)));
+                employeeService.createEmployee(request, userDetails.getId())));
     }
 
     // 직원 정보 수정 — 이름·직급·부서·상태 등 변경 (관리자 전용)
@@ -84,10 +85,11 @@ public class EmployeeController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployeeStatus(
             @PathVariable Long id,
-            @RequestParam("status") EmployeeStatus status) {
+            @RequestParam("status") EmployeeStatus status,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         return ResponseEntity.ok(ApiResponse.ok(
-                employeeService.updateMyStatus(id, status)));
+                employeeService.updateMyStatus(id, status, userDetails.getId())));
     }
 
     // 내 상태 변경 — 로그인한 본인의 상태를 ACTIVE / AWAY로 전환 (INACTIVE는 ADMIN 전용)
@@ -100,6 +102,6 @@ public class EmployeeController {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
         return ResponseEntity.ok(ApiResponse.ok(
-                employeeService.updateMyStatus(userDetails.getId(), status)));
+                employeeService.updateMyStatus(userDetails.getId(), status, userDetails.getId())));
     }
 }
