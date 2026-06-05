@@ -49,10 +49,10 @@ public class LeaveService {
         Employee approver = employeeRepository.findById(req.getApproverId())
                 .orElseThrow(() -> new CustomException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
-        //잔여 연차 부족 검증
-        short currentYear = (short) LocalDate.now().getYear();
+        //잔여 연차 부족 검증 — 휴가 시작일이 속한 연도의 연차 기준 (승인 시 차감 연도와 일치)
+        short leaveYear = (short) req.getStartDate().getYear();
         AnnualLeaveBalance balance = annualLeaveBalanceRepository
-                .findByEmployeeIdAndYear(employeeId, currentYear)
+                .findByEmployeeIdAndYear(employeeId, leaveYear)
                 .orElseThrow(() -> new CustomException(ErrorCode.LEAVE_BALANCE_NOT_FOUND));
 
         if (balance.getRemainingDays().compareTo(req.getDayCount()) < 0) {
