@@ -8,6 +8,7 @@ import com.worksync.domain.employee.entity.JobGrade;
 import com.worksync.domain.employee.repository.EmployeeRepository;
 import com.worksync.domain.file.dto.FileUploadResponse;
 import com.worksync.domain.file.repository.FileAttachmentRepository;
+import com.worksync.domain.audit.service.AuditLogService;
 import com.worksync.domain.notification.entity.NotificationType;
 import com.worksync.domain.notification.service.NotificationService;
 import com.worksync.domain.task.dto.TaskCreateRequest;
@@ -35,6 +36,13 @@ public class TaskService {
     private final DepartmentRepository departmentRepository;
     private final FileAttachmentRepository fileAttachmentRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
+
+    // 감사 로그 카테고리 / 액션명
+    private static final String CATEGORY_TASK = "TASK";
+    private static final String ACTION_CREATE = "업무 생성";
+    private static final String ACTION_UPDATE = "업무 수정";
+    private static final String ACTION_DELETE = "업무 삭제";
 
     //업무 생성
     @Transactional
@@ -82,6 +90,11 @@ public class TaskService {
                     saved.getId()
             );
         }
+
+        // 감사 로그 — 업무 생성
+        auditLogService.log(creator.getId(), creator.getName(),
+                ACTION_CREATE, CATEGORY_TASK, saved.getId(), null, null);
+
         return TaskResponse.from(saved);
     }
 
@@ -169,6 +182,12 @@ public class TaskService {
                 .stream()
                 .map(FileUploadResponse::from)
                 .toList();
+
+        // 감사 로그 — 업무 수정
+        String actorName = employeeRepository.findById(requesterId)
+                .map(Employee::getName).orElse(null);
+        auditLogService.log(requesterId, actorName, ACTION_UPDATE, CATEGORY_TASK, taskId, null, null);
+
         return TaskResponse.from(task,attachments);
     }
 
@@ -178,6 +197,11 @@ public class TaskService {
         Task task=taskRepository.findById(taskId)
                 .orElseThrow(()->new CustomException(ErrorCode.TASK_NOT_FOUND));
         checkEditPermission(task,requesterId);
+
+        // 감사 로그 — 업무 삭제 (삭제 전 actor 이름 확보)
+        String actorName = employeeRepository.findById(requesterId)
+                .map(Employee::getName).orElse(null);
+        auditLogService.log(requesterId, actorName, ACTION_DELETE, CATEGORY_TASK, taskId, null, null);
 
         taskRepository.delete(task);
     }
