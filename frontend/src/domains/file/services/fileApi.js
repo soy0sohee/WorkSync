@@ -23,8 +23,8 @@ export async function saveFile(accessToken, file) {
   return await fetch(`${BASE_URL}/files/save`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(file),
   })
@@ -57,12 +57,14 @@ export async function getFile(accessToken, refType, refId) {
     });
 }
 
-export async function deleteFile(accessToken, id) {
-  return await fetch(`${BASE_URL}/files?${id}`, {
+export async function deleteFile(accessToken, filePath) {
+  return await fetch(`${BASE_URL}/files`, {
     method: "DELETE",
     headers: {
+      "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
+    body: JSON.stringify(filePath),
   })
     .then((response) => {
       return response.json();
