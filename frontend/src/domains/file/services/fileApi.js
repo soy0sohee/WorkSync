@@ -57,14 +57,30 @@ export async function getFile(accessToken, refType, refId) {
     });
 }
 
-export async function deleteFile(accessToken, filePath) {
-  return await fetch(`${BASE_URL}/files`, {
+export async function deleteFile(accessToken, fileId) {
+  return await fetch(`${BASE_URL}/files/${fileId}`, {
     method: "DELETE",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify(filePath),
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .then((json) => {
+      return json;
+    })
+    .catch((error) => {
+      console.log("에러발생: " + error);
+    });
+}
+
+export async function deleteFormStorage(accessToken, filePath) {
+  return await fetch(`${BASE_URL}/files/${filePath}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
   })
     .then((response) => {
       return response.json();

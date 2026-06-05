@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useAuthContext from "../../../store/AuthContext";
 import {
@@ -10,7 +10,7 @@ import {
 import EmployeeForm from "../components/EmployeeForm";
 import { WSSuccessScreen } from "../../../components/common/LayoutComponents";
 import useFileUpload from "../../../hooks/useFileUpload";
-import { getFile } from "../../file/services/fileApi";
+import { getFile, saveFile, deleteFile } from "../../file/services/fileApi";
 
 export default function EmployeeEdit() {
   const { id } = useParams();
@@ -26,6 +26,7 @@ export default function EmployeeEdit() {
     password: "",
     phone: "",
     jobGrade: "",
+    profileImage: "",
     role: "",
     departmentId: 0,
     hireDate: "",
@@ -35,13 +36,13 @@ export default function EmployeeEdit() {
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
   const isValidPhone = /^010-\d{4}-\d{4}$/.test(form.phone);
   const isValid = [
-    form.empNo.trim().length > 0,
-    form.name.trim().length > 0,
-    form.email.trim().length > 0,
+    form.empNo?.trim().length > 0,
+    form.name?.trim().length > 0,
+    form.email?.trim().length > 0,
     isValidEmail,
     isValidPhone,
-    form.role.trim().length > 0,
-    form.jobGrade.trim().length > 0,
+    form.role?.trim().length > 0,
+    form.jobGrade?.trim().length > 0,
     form.departmentId > 0,
   ].every(Boolean);
 
@@ -68,6 +69,8 @@ export default function EmployeeEdit() {
             name: f.originalName,
             size: f.fileSize,
           },
+          url: f.filePath,
+          fileId: f.id,
         })),
       );
     });
@@ -77,7 +80,18 @@ export default function EmployeeEdit() {
   useEffect(() => {
     if (!accessToken || !id) return;
     getEmployeeById(accessToken, id).then((data) => {
-      setForm(data.data);
+      setForm({
+        empNo: data.data.empNo ?? "",
+        name: data.data.name ?? "",
+        email: data.data.email ?? "",
+        password: data.data.password ?? "",
+        phone: data.data.phone ?? "",
+        jobGrade: data.data.jobGrade ?? "",
+        profileImage: data.data.profileImage ?? "",
+        role: data.data.role ?? "",
+        departmentId: data.data.departmentId ?? 0,
+        hireDate: data.data.hireDate ?? "",
+      });
     });
   }, [accessToken, id]);
 
@@ -138,6 +152,8 @@ export default function EmployeeEdit() {
 
     try {
       await deleteEmployee(accessToken, id);
+      clearFiles();
+      removeFiles();
       navigate("/organization");
     } catch (error) {
       console.log("저장 실패: " + error);
