@@ -7,5 +7,4 @@ import java.util.Optional;
 
 public interface AnnualLeaveBalanceRepository extends JpaRepository <AnnualLeaveBalance,Long> {
     Optional<AnnualLeaveBalance> findByEmployeeIdAndYear(Long employeeId, Short year);
-
 }

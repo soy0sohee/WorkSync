@@ -71,9 +71,9 @@ public class LeaveService {
                 .stepOrder(1)
                 .stepType(StepType.DRAFT)
                 .build();
-        draftLine.process(ApprovalLineStatus.APPROVED,null);
+        draftLine.process(ApprovalLineStatus.APPROVED, null);
 
-        ApprovalLine approvalLine=ApprovalLine.builder()
+        ApprovalLine approvalLine = ApprovalLine.builder()
                 .doc(approvalDoc)
                 .approver(approver)
                 .stepOrder(2)
@@ -83,7 +83,6 @@ public class LeaveService {
         approvalDoc.getApprovalLines().add(draftLine);
         approvalDoc.getApprovalLines().add(approvalLine);
         approvalDocRepository.save(approvalDoc);
-
 
         LeaveRequest leaveRequest = LeaveRequest.builder()
                 .employee(employee)
@@ -102,7 +101,7 @@ public class LeaveService {
         notificationService.send(
                 approver.getId(),
                 NotificationType.APPROVAL,
-                employee.getName()+"님이 휴가를 신청했습니다",
+                employee.getName() + "님이 휴가를 신청했습니다",
                 "LEAVE",
                 saved.getId()
         );
@@ -111,9 +110,9 @@ public class LeaveService {
 
     //연차 잔여 조회
     public LeaveBalanceResponse getBalance(Long employeeId){
-        short currentYear=(short)LocalDate.now().getYear();
+        short currentYear = (short)LocalDate.now().getYear();
 
-        AnnualLeaveBalance balance=annualLeaveBalanceRepository
+        AnnualLeaveBalance balance = annualLeaveBalanceRepository
                 .findByEmployeeIdAndYear(employeeId, currentYear)
                 .orElseThrow(() -> new CustomException(ErrorCode.LEAVE_BALANCE_NOT_FOUND));
 

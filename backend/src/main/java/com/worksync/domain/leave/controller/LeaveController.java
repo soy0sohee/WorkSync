@@ -19,14 +19,12 @@ import org.springframework.web.bind.annotation.*;
 public class LeaveController {
     private final LeaveService leaveService;
 
-
-
-
     //휴가신청
     @PostMapping
     public ResponseEntity<ApiResponse<LeaveResponse>> request(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid@RequestBody LeaveCreateRequest request){
+
         return ResponseEntity.status(201)
                 .body(ApiResponse.created(leaveService.request(userDetails.getId(),request)));
     }
@@ -34,10 +32,8 @@ public class LeaveController {
     //연차 잔여 조회
     @GetMapping("/balance")
     public ResponseEntity<ApiResponse<LeaveBalanceResponse>> getBalance(
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ){
-        return ResponseEntity.ok(ApiResponse.ok(leaveService.getBalance(userDetails.getId()));
+            @AuthenticationPrincipal CustomUserDetails userDetails){
+
+        return ResponseEntity.ok(ApiResponse.ok(leaveService.getBalance(userDetails.getId())));
     }
-
-
 }
