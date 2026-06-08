@@ -40,24 +40,7 @@ export async function getEmployees(accessToken) {
     .catch((error) => console.log("에러발생 : " + error));
 }
 
-// 전자결재 등록
-export async function createApproval(accessToken, body) {
-  return await fetch(`${BASE_URL}/approvals`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(body),
-  })
-    .then((response) => response.json())
-    .then((json) => {
-      console.log("등록 결과 : ", json);
-      return json;
-    })
-    .catch((error) => console.log("에러 발생 : " + error));
-}
-
+// 내가 기안한 문서 목록(작성자 기준)
 export async function getMyApprovals(accessToken, status = "all") {
   const url =
     status !== "all"
@@ -84,6 +67,7 @@ export async function getMyApprovals(accessToken, status = "all") {
     });
 }
 
+// 전자결재 상세조회
 export async function getApprovalById(accessToken, id) {
   return await fetch(`${BASE_URL}/approvals/${id}`, {
     method: "GET",
@@ -104,6 +88,7 @@ export async function getApprovalById(accessToken, id) {
     });
 }
 
+// 양식 목록 가져오기
 export async function getForms(accessToken) {
   return await fetch(`${BASE_URL}/approvals/forms`, {
     method: "GET",
@@ -123,7 +108,7 @@ export async function getForms(accessToken) {
 // 결재선
 export async function processApproval(accessToken, id, status, comment = "") {
   const res = await fetch(`${BASE_URL}/approvals/${id}/process`, {
-    method: "PATCH",
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
@@ -133,9 +118,27 @@ export async function processApproval(accessToken, id, status, comment = "") {
     .then((res) => res.json())
     .then((json) => {
       console.log("process result : ", json);
-      return json.data ?? null;
+      return json;
     })
     .catch((error) => console.log("에러발생 : " + error));
+}
+
+// 전자결재 등록
+export async function createApproval(accessToken, body) {
+  return await fetch(`${BASE_URL}/approvals`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(body),
+  })
+    .then((response) => response.json())
+    .then((json) => {
+      console.log("등록 결과 : ", json);
+      return json;
+    })
+    .catch((error) => console.log("에러 발생 : " + error));
 }
 
 // 전자결재 수정
@@ -172,5 +175,24 @@ export function deleteApproval(accessToken, id) {
     .catch((error) => {
       console.log("에러 발생 : " + error);
       throw error; // onClick의 try-catch 전달용
+    });
+}
+
+// 내가 결재해야 할 문서 목록
+export function getPendingApproval(accessToken) {
+  return fetch(`${BASE_URL}/approvals/pending`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((response) => response.json())
+    .then((json) => {
+      console.log("pending : ", json);
+      return json.data;
+    })
+    .catch((error) => {
+      console.log("에러 발생 : ", error);
     });
 }

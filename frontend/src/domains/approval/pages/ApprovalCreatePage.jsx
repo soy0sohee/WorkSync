@@ -98,6 +98,13 @@ export default function ApprovalNew() {
     });
   }, [accessToken]);
 
+  useEffect(() => {
+    if (templates.length > 0) {
+      setDocType(templates[0].formType);
+      setSelectedForm(templates[0]);
+    }
+  }, [templates]);
+
   const [approvers, setApprovers] = useState([]);
   const [showMemberPicker, setShowMemberPicker] = useState(false);
 

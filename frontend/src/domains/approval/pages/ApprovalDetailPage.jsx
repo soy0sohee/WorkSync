@@ -225,6 +225,11 @@ function ExpenseDetail({ items, approval }) {
 function BusinessTripDetail({ items }) {
   const travelers = parseJSON(items.travelers);
   const expenses = parseJSON(items.expenses);
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-");
+    return `${year}.${month}.${day}`;
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -244,7 +249,11 @@ function BusinessTripDetail({ items }) {
               </tr>
               <tr>
                 <th>시행 일자</th>
-                <td colSpan={3}>{items.executionDate ?? "-"}</td>
+                <td colSpan={3}>
+                  {formatDate(items.executionStartDate) ?? "-"}
+                  <span style={{ padding: "5px" }}>-</span>
+                  {formatDate(items.executionEndDate) ?? "-"}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -349,6 +358,7 @@ export default function ApprovalDetail() {
       setStatus(data.status);
       setApprovalLines(data.approvalLines ?? []);
       console.log("items : ", data.items);
+      console.log("approvalLines : ", approvalLines);
     });
   }, [accessToken, id]);
 
@@ -357,6 +367,7 @@ export default function ApprovalDetail() {
     getMyInfo(accessToken).then((data) => {
       if (!data) return;
       setMe(data);
+      console.log("me.id : ", me?.id);
     });
   }, [accessToken]);
 
@@ -376,7 +387,12 @@ export default function ApprovalDetail() {
   const canProcess = myLine && myLine.status === "WAITING" && !isReference;
 
   const handleApprove = async () => {
-    await processApproval(accessToken, id, "APPROVED");
+    const result = await processApproval(accessToken, id, "APPROVED");
+    if (result?.status === 200) {
+      alert("결재 승인이 완료되었습니다.");
+    } else {
+      alert("처리 중 오류가 발생했습니다.");
+    }
     getApprovalById(accessToken, id).then((data) => {
       if (!data) return;
       setApproval(data);
@@ -386,7 +402,12 @@ export default function ApprovalDetail() {
   };
 
   const handleReject = async () => {
-    await processApproval(accessToken, id, "REJECTED");
+    const result = await processApproval(accessToken, id, "REJECTED");
+    if (result?.status === 200) {
+      alert("결재 반려가 완료되었습니다.");
+    } else {
+      alert("처리 중 오류가 발생했습니다.");
+    }
     getApprovalById(accessToken, id).then((data) => {
       if (!data) return;
       setApproval(data);

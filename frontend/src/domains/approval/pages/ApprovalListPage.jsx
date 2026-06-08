@@ -7,6 +7,7 @@ import {
   getMyApprovals,
   getApprovalById,
   deleteApproval,
+  getPendingApproval,
 } from "../services/approvalApi";
 import {
   WSAvatar,
@@ -44,8 +45,21 @@ export default function Approval() {
 
     getMyApprovals(accessToken, status).then((data) => {
       if (!data) return;
-
       setMyApprovals(data);
+    });
+    getPendingApproval(accessToken).then((data) => {
+      console.log("pending 데이터 : ", data);
+      if (!data) return;
+      setMyApprovals((prev) => {
+        // 기안한 문서들 + 결재선에 포함된 문서 하나의 배열로 합치기
+        const combined = [...(prev ?? []), ...(data ?? [])];
+        // id 기준 중복 제거
+        const unique = combined.filter(
+          (item, index, self) =>
+            self.findIndex((i) => i.id === item.id) === index,
+        );
+        return unique;
+      });
     });
   }, [accessToken, status]);
 

@@ -238,12 +238,22 @@ function LeaveForm({ formValues, setFormValues, myInfo, title, setTitle }) {
   const update = (key, value) =>
     setFormValues((prev) => ({ ...prev, [key]: value }));
 
+  // 휴가 종류
+  const [leaveType, setLeaveType] = useState("");
+  // 휴가 기간
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  // 반차
+  const [halfDate, setHalfDate] = useState("");
+  const [halfTime, setHalfTime] = useState("");
+
   useEffect(() => {
     if (myInfo) {
       setFormValues((prev) => ({
         ...prev,
         departmentName: myInfo.departmentName,
         name: myInfo.name,
+        leaveType: "연차",
       }));
     }
   }, [myInfo]);
@@ -296,30 +306,105 @@ function LeaveForm({ formValues, setFormValues, myInfo, title, setTitle }) {
                 휴가 종류 <span className={s.required}>*</span>
               </label>
               <select
-                value={formValues.leaveType ?? ""}
-                onChange={(e) => update("leaveType", e.target.value)}
+                value={leaveType}
+                onChange={(e) => {
+                  setLeaveType(e.target.value);
+                  setFormValues((prev) => ({
+                    ...prev,
+                    leaveType: e.target.value,
+                  }));
+                }}
                 className={s.select}
               >
                 <option value="">선택</option>
-                <option value="연차">연차</option>
-                <option value="반차">반차</option>
-                <option value="병가">병가</option>
-                <option value="휴가">휴가</option>
+                <option value="ANNUAL">연차</option>
+                <option value="HALF">반차</option>
+                <option value="SICK">병가</option>
+                <option value="OTHER">휴가</option>
               </select>
             </div>
-            {/* 휴가 기간(날짜 선택) */}
-            <div>
-              <label className={s.label}>
-                휴가 기간 <span className={s.required}>*</span>
-              </label>
-              <input
-                type="date"
-                value={formValues.days ?? ""}
-                onChange={(e) => update("days", e.target.value)}
-                className={s.dateInput}
-              />
+            <div className={s.row2}>
+              {/* 휴가 기간(날짜 선택) */}
+              {leaveType === "HALF" ? (
+                // 반차 - 날짜 + 오전/오후 선택
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label className={s.label}>
+                    휴가 기간 <span className={s.required}>*</span>
+                  </label>
+                  <div style={{ display: "flex", width: "100%" }}>
+                    <input
+                      type="date"
+                      value={halfDate}
+                      className={s.input}
+                      style={{ flex: 1, marginRight: "15px" }}
+                      onChange={(e) => {
+                        setHalfDate(e.target.value);
+                        setFormValues((prev) => ({
+                          ...prev,
+                          halfDate: e.target.value,
+                        }));
+                      }}
+                    />
+                    <select
+                      value={halfTime}
+                      className={s.input}
+                      style={{ flex: 1 }}
+                      onChange={(e) => {
+                        setHalfTime(e.target.value);
+                        setFormValues((prev) => ({
+                          ...prev,
+                          halfTime: e.target.value,
+                        }));
+                      }}
+                    >
+                      <option value="">선택</option>
+                      <option value="AM">오전</option>
+                      <option value="PM">오후</option>
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                leaveType !== "HALF" &&
+                leaveType && (
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <label className={s.label}>
+                      휴가 기간 <span className={s.required}>*</span>
+                    </label>
+                    <div style={{ display: "flex", width: "100%" }}>
+                      <input
+                        type="date"
+                        value={startDate}
+                        className={s.input}
+                        style={{ flex: 1 }}
+                        onChange={(e) => {
+                          setStartDate(e.target.value);
+                          setFormValues((prev) => ({
+                            ...prev,
+                            startDate: e.target.value,
+                          }));
+                        }}
+                      />
+                      <span style={{ padding: "10px" }}>-</span>
+                      <input
+                        type="date"
+                        value={endDate}
+                        className={s.input}
+                        style={{ flex: 1 }}
+                        onChange={(e) => {
+                          setEndDate(e.target.value);
+                          setFormValues((prev) => ({
+                            ...prev,
+                            endDate: e.target.value,
+                          }));
+                        }}
+                      />
+                    </div>
+                  </div>
+                )
+              )}
             </div>
           </div>
+
           {/* 휴가 사유 텍스트 입력 */}
           <div>
             <label className={s.label}>
@@ -458,7 +543,6 @@ function PurchaseForm({ formValues, setFormValues, myInfo, title, setTitle }) {
               className={s.input}
             />
           </div>
-
           <div>
             <label className={s.label}>
               구매 용도<span className={s.required}>*</span>
@@ -471,6 +555,19 @@ function PurchaseForm({ formValues, setFormValues, myInfo, title, setTitle }) {
                 setFormValues((prev) => ({ ...prev, purpose: e.target.value }))
               }
               className={s.textarea}
+            />
+          </div>
+          <div>
+            <label className={s.label}>
+              요청 날짜<span className={s.required}>*</span>
+            </label>
+            <input
+              type="date"
+              value={formValues.date ?? ""}
+              onChange={(e) =>
+                setFormValues((prev) => ({ ...prev, date: e.target.value }))
+              }
+              className={s.input}
             />
           </div>
           <div>
@@ -532,14 +629,7 @@ function PurchaseForm({ formValues, setFormValues, myInfo, title, setTitle }) {
               className={s.tableInput}
               style={{ maxWidth: 130 }}
             />
-            {/* 날짜 */}
-            <input
-              type="date"
-              value={row.date ?? ""}
-              onChange={(e) => updateRow(row.id, "date", e.target.value)}
-              className={s.tableInput}
-              style={{ maxWidth: 160 }}
-            />
+
             {/* 비고
              */}
             <input
@@ -688,17 +778,30 @@ function BusinessTripForm({
             <label className={s.label}>
               시행 일자<span className={s.required}>*</span>
             </label>
-            <input
-              type="date"
-              value={formValues.executionDate ?? ""}
-              onChange={(e) =>
-                setFormValues((prev) => ({
-                  ...prev,
-                  executionDate: e.target.value,
-                }))
-              }
-              className={s.input}
-            />
+            <div className={s.row2}>
+              <input
+                type="date"
+                value={formValues.executionStartDate ?? ""}
+                onChange={(e) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    executionStartDate: e.target.value,
+                  }))
+                }
+                className={s.input}
+              />
+              <input
+                type="date"
+                value={formValues.executionEndDate ?? ""}
+                onChange={(e) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    executionEndDate: e.target.value,
+                  }))
+                }
+                className={s.input}
+              />
+            </div>
           </div>
           <div>
             <label className={s.label}>
