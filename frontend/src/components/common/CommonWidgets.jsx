@@ -125,7 +125,7 @@ export function WSAvatar({ src, name, size = 32 }) {
           "--avatar-size": `${size}px`,
           width: `${size}px`,
           height: `${size}px`,
-          fontsize: `${size * 0.6}px`,
+          fontSize: `${size * 0.5}px`,
         }}
       >
         {initial}

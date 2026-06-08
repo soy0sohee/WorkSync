@@ -10,6 +10,8 @@ import {
 import s from "./BoardCreatePage.module.css";
 import { getMyInfo, getPostById, getUpdatePosts } from "../services/boardApi";
 import useAuthContext from "../../../store/AuthContext";
+import useFileUpload from "../../../hooks/useFileUpload";
+import { getFile, saveFile, deleteFile } from "../../file/services/FileApi";
 
 const CATEGORY_OPTIONS = [
   { value: "notice", label: "공지사항", color: "#EF4444" },
@@ -34,8 +36,6 @@ export default function BoardNew() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("free");
   const [content, setContent] = useState("");
-  const [files, setFiles] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [role, setRole] = useState(null);
   const [myDepartmentName, setMyDepartmentName] = useState("");
@@ -43,18 +43,20 @@ export default function BoardNew() {
   const { boardId, postId } = useParams();
   const MAX_CHARS = 3000;
 
-  //파일 추가
-  const addFiles = (newFiles) => {
-    setFiles((prev) => [...prev, ...newFiles.map((f) => ({ file: f }))]);
-  };
-
-  //파일 삭제(index)
-  const removeFiles = (index) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const isValid =
     title.trim().length > 0 && category !== "" && content.trim().length > 0;
+
+  // 파일 선언
+  const {
+    files,
+    setFiles,
+    isDragging,
+    setIsDragging,
+    uploadedFile,
+    addFiles,
+    removeFiles,
+    clearFiles,
+  } = useFileUpload(accessToken, "POST", postId);
 
   const getCategoryValue = (boardName) => {
     const found = CATEGORY_OPTIONS.find(
@@ -74,6 +76,23 @@ export default function BoardNew() {
       setMyDepartmentName(data.departmentName);
       setRole(data.role);
     });
+    // 파일 데이터 불러오기
+    if (!accessToken || !postId) return;
+    getFile(accessToken, "POST", postId).then((data) => {
+      const fileList = Array.isArray(data.data) ? data.data : [];
+      // console.log(fileList);
+      setFiles(
+        fileList.map((f) => ({
+          file: {
+            name: f.originalName,
+            size: f.fileSize,
+          },
+          url: f.filePath,
+          refType: f.refType,
+          refId: f.refId,
+        })),
+      );
+    });
   }, [boardId, postId, accessToken]);
 
   function handleFileDrop(e) {
@@ -86,6 +105,13 @@ export default function BoardNew() {
     if (e.target.files) addFiles(Array.from(e.target.files));
   }
 
+  // 파일 삭제
+  const handleRemoveFile = async (index) => {
+    await removeFiles(index);
+    setForm((prev) => ({ ...prev, profileImage: null }));
+  };
+
+  // 저장
   async function handleSubmit() {
     if (!accessToken) return;
 
@@ -101,10 +127,27 @@ export default function BoardNew() {
         accessToken,
       );
       setSubmitted(true);
+
+      // 파일 경로가 있으면 파일 저장
+      if (uploadedFile?.filePath && uploadedFile?.isNew) {
+        // 파일 저장
+        await saveFile(accessToken, {
+          ...uploadedFile,
+          refType: "POST",
+          refId: postId,
+        });
+      }
+
       setTimeout(() => navigate("/board"), 1800);
     } catch (err) {
       console.error("게시글 업데이트 실패", err);
+
+      // 파일 삭제
+      removeFiles();
     }
+
+    // 파일 초기화
+    clearFiles();
   }
 
   if (submitted) {
@@ -258,7 +301,7 @@ export default function BoardNew() {
 
             <WSFileList
               files={files.map(({ file }) => file)}
-              onRemove={removeFiles}
+              onRemove={handleRemoveFile}
             />
           </WSCard>
 

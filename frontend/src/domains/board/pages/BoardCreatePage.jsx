@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Send } from "lucide-react";
-import { getCreatePosts, getBoards, getMyInfo, getDepartmentBoard } from "../services/boardApi";
+import {
+  getCreatePosts,
+  getBoards,
+  getMyInfo,
+  getDepartmentBoard,
+} from "../services/boardApi";
 import { ArrowLeft, Paperclip, CheckCircle } from "lucide-react";
 import { WSCard, WSButton } from "../../../components/common/CommonWidgets";
 import {
@@ -10,6 +15,8 @@ import {
 } from "../../../components/common/FormComponents";
 import s from "./BoardCreatePage.module.css";
 import useAuthContext from "../../../store/AuthContext";
+import useFileUpload from "../../../hooks/useFileUpload";
+import { saveFile, deleteFile } from "../../file/services/FileApi";
 
 const BOARD_COLORS = {
   1: "#EF4444", // 공지사항 - 빨강
@@ -35,8 +42,6 @@ export default function BoardNew() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [content, setContent] = useState("");
-  const [files, setFiles] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [boardId, setboardId] = useState("");
   const [role, setRole] = useState(null);
@@ -44,32 +49,26 @@ export default function BoardNew() {
   const [myDepartmentName, setMyDepartmentName] = useState("");
   const [deptBoardId, setDeptBoardId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [employee, setEmployee] = useState([]);
   const MAX_CHARS = 3000;
   const { accessToken } = useAuthContext();
 
-  //파일 추가
-  const addFiles = (newFiles) => {
-    setFiles((prev) => [...prev, ...newFiles.map((f) => ({ file: f }))]);
-  };
-
-  //파일 삭제(index)
-  const removeFiles = (index) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
+  // 유효성 검사
   const isValid =
     title.trim().length > 0 && category !== "" && content.trim().length > 0;
 
-  function handleFileDrop(e) {
-    e.preventDefault();
-    setIsDragging(false);
-    addFiles(Array.from(e.dataTransfer.files));
-  }
+  // 파일 선언
+  const {
+    files,
+    isDragging,
+    setIsDragging,
+    uploadedFile,
+    addFiles,
+    removeFiles,
+    clearFiles,
+  } = useFileUpload(accessToken, "POST");
 
-  function handleFileInput(e) {
-    if (e.target.files) addFiles(Array.from(e.target.files));
-  }
-
+  // 폼 저장
   async function handleSubmit() {
     if (!accessToken || !isValid || isLoading) return;
 
@@ -79,7 +78,8 @@ export default function BoardNew() {
 
     setIsLoading(true);
     try {
-      await getCreatePosts(
+      // 게시물 저장
+      const response = await getCreatePosts(
         actualBoardId,
         {
           boardId: actualBoardId,
@@ -88,6 +88,15 @@ export default function BoardNew() {
         },
         accessToken,
       );
+      const postId = response;
+
+      // 파일 저장
+      await saveFile(accessToken, {
+        ...uploadedFile,
+        refType: "POST",
+        refId: postId,
+      });
+
       setSubmitted(true);
 
       setTimeout(() => navigate("/board"), 1800);
@@ -96,6 +105,9 @@ export default function BoardNew() {
     } finally {
       setIsLoading(false);
     }
+
+    // 파일 초기화
+    clearFiles();
   }
 
   // API에서 받아온 게시판 목록(드롭다운)
@@ -128,6 +140,7 @@ export default function BoardNew() {
     });
   }, [accessToken]);
 
+  // 내 데이터 저장
   useEffect(() => {
     if (!accessToken) return;
 
@@ -198,7 +211,7 @@ export default function BoardNew() {
                     );
                   })}
                 </div>
-                
+
                 {category === "DEPARTMENT" && (
                   <div>
                     <label className={s.label}>부서명</label>

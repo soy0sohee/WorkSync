@@ -1,6 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import useAuthContext from "../../../store/AuthContext";
-import { getBoards, getMyInfo, getPosts, getDepartmentBoard, getDepartments } from "../services/boardApi";
+import {
+  getBoards,
+  getMyInfo,
+  getPosts,
+  getDepartmentBoard,
+  getDepartments,
+  getEmployee,
+} from "../services/boardApi";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, ChevronDown } from "lucide-react";
 import {
@@ -10,13 +17,6 @@ import {
   WSPagination,
 } from "../../../components/common/CommonWidgets";
 import s from "./BoardListPage.module.css";
-
-// const CATEGORIES = [
-//   { value: "all", label: "전체" },
-//   { value: "notice", label: "공지사항" },
-//   { value: "dept", label: "부서 게시판" },
-//   { value: "free", label: "자유 게시판" },
-// ];
 
 export default function Board() {
   const navigate = useNavigate();
@@ -34,6 +34,7 @@ export default function Board() {
   const [deptBoardId, setDeptBoardId] = useState(null); // 내 부서게시판 id
   const [departments, setDepartments] = useState([]); // ADMIN 부서 필터 목록
   const [deptFilter, setDeptFilter] = useState("all"); // ADMIN 선택한 부서 필터
+  const [profile, setProfile] = useState([]); // 목록 프로필이미지
 
   // 카테고리 + 검색어 적용하여 정렬
   const filteredPosts = posts.filter((p) => {
@@ -104,10 +105,16 @@ export default function Board() {
     });
   }, [accessToken]);
 
+  // 게시글 목록
   useEffect(() => {
     if (!accessToken) return;
 
     setPosts([]); // category 변경 시 stale 데이터 즉시 초기화
+
+    // 전 직원 프로필
+    getEmployee(accessToken).then((data) => {
+      setProfile(Array.isArray(data.data) ? data.data : []);
+    });
 
     if (category === "all") {
       // 전체 조회: DEPARTMENT 타입 중 내 부서 게시판만 포함
@@ -120,7 +127,7 @@ export default function Board() {
         Promise.all(ids.map((id) => getPosts(id, accessToken))).then(
           (results) => {
             setPosts(results.flat().filter(Boolean));
-          }
+          },
         );
       });
     } else if (category === "DEPARTMENT") {
@@ -149,9 +156,11 @@ export default function Board() {
             onChange={(e) => {
               const raw = e.target.value;
               const val =
-                raw === "all" ? "all"
-                : raw === "DEPARTMENT" ? "DEPARTMENT"
-                : Number(raw);
+                raw === "all"
+                  ? "all"
+                  : raw === "DEPARTMENT"
+                    ? "DEPARTMENT"
+                    : Number(raw);
               setCategory(val);
               setPage(1);
             }}
@@ -221,7 +230,6 @@ export default function Board() {
         ) : (
           <div className={s.list}>
             {pagePosts.map((post) => {
-              console.log(post);
               const isNotice = post.boardName === "공지사항";
               return (
                 <div
@@ -247,7 +255,14 @@ export default function Board() {
 
                     <p className={s.rowContent}>{post.content.slice(0, 200)}</p>
                     <div className={s.rowMeta}>
-                      <WSAvatar src={null} name={post.authorName} size={20} />
+                      <WSAvatar
+                        src={
+                          profile.find((p) => p.id === post.authorId)
+                            ?.profileImage ?? null
+                        }
+                        name={post.authorName}
+                        size={20}
+                      />
                       <span className={s.rowAuthor}>{post.authorName}</span>
                       <span className={s.rowDot}>·</span>
                       <span className={s.rowDate}>

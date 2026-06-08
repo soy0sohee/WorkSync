@@ -1192,8 +1192,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: var(--color-primary, #6366f1);
-  color: white;
+  background-color: var(--ws-text-600);
+  color: var(--ws-border-light);
   font-weight: 500;
   flex-shrink: 0;
 }
