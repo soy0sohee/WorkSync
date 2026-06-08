@@ -10,6 +10,7 @@ import com.worksync.domain.employee.entity.Employee;
 import com.worksync.domain.employee.entity.EmployeeRole;
 import com.worksync.domain.employee.entity.EmployeeStatus;
 import com.worksync.domain.employee.repository.EmployeeRepository;
+import com.worksync.domain.file.service.FileService;
 import com.worksync.global.exception.CustomException;
 import com.worksync.global.exception.ErrorCode;
 import jakarta.persistence.criteria.Predicate;

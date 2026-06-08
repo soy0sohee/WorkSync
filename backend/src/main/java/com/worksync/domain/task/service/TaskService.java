@@ -4,9 +4,9 @@ package com.worksync.domain.task.service;
 import com.worksync.domain.department.entity.Department;
 import com.worksync.domain.department.repository.DepartmentRepository;
 import com.worksync.domain.employee.entity.Employee;
-import com.worksync.domain.employee.entity.JobGrade;
 import com.worksync.domain.employee.repository.EmployeeRepository;
 import com.worksync.domain.file.dto.FileUploadResponse;
+import com.worksync.domain.file.entity.RefType;
 import com.worksync.domain.file.repository.FileAttachmentRepository;
 import com.worksync.domain.audit.service.AuditLogService;
 import com.worksync.domain.notification.entity.NotificationType;
@@ -43,6 +43,10 @@ public class TaskService {
     private static final String ACTION_CREATE = "업무 생성";
     private static final String ACTION_UPDATE = "업무 수정";
     private static final String ACTION_DELETE = "업무 삭제";
+
+
+    // Task => RefType Enum 타입 변경
+    RefType refTypeName = RefType.fromTypeName("TASK");
 
     //업무 생성
     @Transactional
@@ -104,7 +108,7 @@ public class TaskService {
                 .orElseThrow(()->new CustomException(ErrorCode.TASK_NOT_FOUND));
 
         List<FileUploadResponse> attachments=fileAttachmentRepository
-                .findByRefTypeAndRefId("TASK",taskId)
+                .findByRefTypeAndRefId(refTypeName,taskId)
                 .stream()
                 .map(FileUploadResponse::from)
                 .toList();
@@ -112,7 +116,6 @@ public class TaskService {
         return TaskResponse.from(task,attachments);
 
     }
-
 
     //전체목록(상태 필터+키워드+페이징)
     public Page<TaskResponse>getAll(TaskStatus status, String keyword, Pageable pageable){
@@ -178,7 +181,7 @@ public class TaskService {
         );
 
         List<FileUploadResponse> attachments=fileAttachmentRepository
-                .findByRefTypeAndRefId("TASK",taskId)
+                .findByRefTypeAndRefId(refTypeName,taskId)
                 .stream()
                 .map(FileUploadResponse::from)
                 .toList();
