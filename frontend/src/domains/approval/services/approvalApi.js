@@ -107,7 +107,7 @@ export async function getForms(accessToken) {
 
 // 결재선
 export async function processApproval(accessToken, id, status, comment = "") {
-  const res = await fetch(`${BASE_URL}/approvals/${id}/process`, {
+  return await fetch(`${BASE_URL}/approvals/${id}/process`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -117,7 +117,6 @@ export async function processApproval(accessToken, id, status, comment = "") {
   })
     .then((res) => res.json())
     .then((json) => {
-      console.log("process result : ", json);
       return json;
     })
     .catch((error) => console.log("에러발생 : " + error));
@@ -199,10 +198,13 @@ export function getPendingApproval(accessToken) {
 
 // 잔여일 조회
 export async function getLeaveBalance(accessToken) {
-  return fetch(`${BASE_URL}/leave/Balance`, {
+  return fetch(`${BASE_URL}/leave/balance`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
-    .then((res) => res.json())
+    .then((res) => {
+      if (!res.ok) return null;
+      return res.json();
+    })
     .then((json) => json.data ?? null)
     .catch((error) => console.log("에러발생 : ", error));
 }

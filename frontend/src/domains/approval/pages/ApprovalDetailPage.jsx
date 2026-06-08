@@ -114,7 +114,7 @@ function LeaveDetail({ items, approval }) {
               <th>휴가 종류</th>
               <td>{LEAVE_TYPE[items.leaveType] ?? "-"}</td>
               <th>잔여일</th>
-              <td>{balance?.remainingDays ?? "-"}일</td>
+              <td>{balance ? `${balance.remainingDays}일` : "0일"}</td>
             </tr>
             <tr>
               <th>휴가 기간</th>
@@ -421,6 +421,7 @@ export default function ApprovalDetail() {
     const result = await processApproval(accessToken, id, "APPROVED");
     if (result?.status === 200) {
       alert("결재 승인이 완료되었습니다.");
+      navigate("/approval");
     } else {
       alert("처리 중 오류가 발생했습니다.");
     }
@@ -436,6 +437,7 @@ export default function ApprovalDetail() {
     const result = await processApproval(accessToken, id, "REJECTED");
     if (result?.status === 200) {
       alert("결재 반려가 완료되었습니다.");
+      navigate("/approval");
     } else {
       alert("처리 중 오류가 발생했습니다.");
     }

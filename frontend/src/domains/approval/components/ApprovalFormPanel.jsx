@@ -240,7 +240,7 @@ function LeaveForm({ formValues, setFormValues, myInfo, title, setTitle }) {
     setFormValues((prev) => ({ ...prev, [key]: value }));
 
   // 휴가 종류
-  const [leaveType, setLeaveType] = useState("연차");
+  const [leaveType, setLeaveType] = useState("ANNUAL");
   // 휴가 기간
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
