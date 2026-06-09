@@ -1,5 +1,6 @@
 package com.worksync.domain.notification.dto;
 
+import com.worksync.domain.employee.entity.Employee;
 import com.worksync.domain.notification.entity.Notification;
 import com.worksync.domain.notification.entity.NotificationType;
 import lombok.Builder;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 public class NotificationResponse {
 
     private Long id;
+    private Employee receiver;
     private NotificationType type;
     private String content;
     private String targetType;
@@ -22,6 +24,7 @@ public class NotificationResponse {
     public static NotificationResponse from(Notification notification) {
         return NotificationResponse.builder()
                 .id(notification.getId())
+                .receiver(notification.getReceiver())
                 .type(notification.getType())
                 .content(notification.getContent())
                 .targetType(notification.getTargetType())
