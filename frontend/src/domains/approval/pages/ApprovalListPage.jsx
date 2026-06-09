@@ -38,13 +38,11 @@ const STATUS_OPTIONS = [
 ];
 
 export default function Approval() {
-  const { id } = useParams();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [openDropdown, setOpenDropdown] = useState(null);
   const navigate = useNavigate();
   const { accessToken } = useAuthContext();
-  const [myApprovals, setMyApprovals] = useState([]);
   const [boxType, setBoxType] = useState("my"); // 기안함 / 결재함 / 참조함
   const [status, setStatus] = useState("all"); // 전체 / 대기 / 승인 / 반려
   const [docs, setDocs] = useState([]);
@@ -61,30 +59,6 @@ export default function Approval() {
       getReferenceApprovals(accessToken).then((data) => setDocs(data ?? []));
     }
   }, [accessToken, boxType, status]);
-
-  useEffect(() => {
-    if (!accessToken) return;
-
-    getMyApprovals(accessToken, status).then((data) => {
-      if (!data) return;
-      setMyApprovals(data);
-      console.log("myApprovals", data);
-    });
-    getPendingApproval(accessToken).then((data) => {
-      console.log("pending 데이터 : ", data);
-      if (!data) return;
-      setMyApprovals((prev) => {
-        // 기안한 문서들 + 결재선에 포함된 문서 하나의 배열로 합치기
-        const combined = [...(prev ?? []), ...(data ?? [])];
-        // id 기준 중복 제거
-        const unique = combined.filter(
-          (item, index, self) =>
-            self.findIndex((i) => i.id === item.id) === index,
-        );
-        return unique;
-      });
-    });
-  }, [accessToken, status]);
 
   const filtered = (docs ?? []).filter((doc) => {
     const matchSearch =
@@ -119,7 +93,7 @@ export default function Approval() {
                 }
                 className={s.ddBtn}
               >
-                <span>{statusLabel}</span>
+                <span>{boxLabel}</span>
                 <ChevronDown size={14} color="#9CA3AF" />
               </button>
               {openDropdown === "box" && (
@@ -130,9 +104,7 @@ export default function Approval() {
                       onClick={() => {
                         setBoxType(item.key);
                         setStatus("all");
-                        setOpenDropdown(
-                          openDropdown === "boxType" ? null : "boxType",
-                        );
+                        setOpenDropdown(null);
                         setPage(1);
                       }}
                       className={s.ddItem}
@@ -227,9 +199,13 @@ export default function Approval() {
                       <button
                         className={s.ddItem}
                         onClick={(e) => {
-                          navigate(`/approval/${doc.id}/edit`);
                           e.stopPropagation();
                           setOpenDropdown(null);
+                          if (doc.status !== "IN_PROGRESS") {
+                            alert("대기 중인 문서만 수정할 수 있습니다.");
+                            return;
+                          }
+                          navigate(`/approval/${doc.id}/edit`);
                         }}
                       >
                         수정
@@ -240,16 +216,16 @@ export default function Approval() {
                           e.stopPropagation();
                           setOpenDropdown(null);
                           if (confirm("게시글을 삭제하시겠습니까?")) {
+                            if (doc.status !== "IN_PROGRESS") {
+                              alert("대기 중인 문서만 삭제할 수 있습니다.");
+                              return;
+                            }
                             try {
                               await deleteApproval(accessToken, doc.id);
-                              getMyApprovals(accessToken, status).then(
-                                (data) => {
-                                  if (!data) return;
-                                  setMyApprovals(data);
-                                },
+                              setDocs((prev) =>
+                                prev.filter((d) => d.id !== doc.id),
                               );
                             } catch (err) {
-                              console.error("삭제 에러 : " + err);
                               alert("삭제 실패했습니다.");
                             }
                           }
