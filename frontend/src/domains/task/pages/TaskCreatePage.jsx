@@ -13,6 +13,8 @@ import {
   WSFileList,
 } from "../../../components/common/FormComponents";
 import s from "./TaskCreatePage.module.css";
+import useFileUpload from "../../../hooks/useFileUpload";
+import { saveFile, deleteFile } from "../../file/services/FileApi";
 
 const STATUS_OPTIONS = [
   { key: "TODO", label: "대기중" },
@@ -53,8 +55,6 @@ export default function TaskNew() {
     startDate: "",
     dueDate: "",
   });
-  const [files, setFiles] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [saved, setSaved] = useState(false);
   const [myDepartmentId, setMyDepartmentId] = useState(null);
@@ -70,59 +70,28 @@ export default function TaskNew() {
       setMyDepartmentId(data.departmentId);
     });
 
+    // 전체 직원 호출
     getEmployees(accessToken).then((data) => {
       if (!data) return;
       setMembers(data);
     });
   }, [accessToken]);
 
-  function validationFile(file) {
-    const errors = [];
-    const ext = "." + file.name.split(".").pop().toLowerCase();
-
-    // 확장자 검사
-    if (!ALLOWED_EXT.includes(ext)) {
-      errors.push("허용하지 않은 확장자입니다.");
-    }
-    // 용량 검사
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      errors.push(`파일 크기가 ${MAX_SIZE_MB}MB를 초과했습니다.`);
-    }
-
-    return errors;
-  }
-
-  function addFiles(newFiles) {
-    if (!newFiles || newFiles.length === 0) {
-      return;
-    }
-
-    const validated = newFiles.map((item) => ({
-      file: item,
-      errors: validationFile(item),
-    }));
-
-    const errorFiles = validated.filter((item) => item.errors.length > 0);
-    errorFiles.forEach((item) => {
-      alert(`${item.file.name}: ${item.errors.join(", ")}`);
-    });
-
-    const validOnly = validated.filter((item) => item.errors.length === 0);
-
-    setFiles((prev) => {
-      const merged = [...prev, ...validOnly];
-      return merged.slice(0, 10);
-    });
-  }
-
-  function removeFiles(index) {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  }
-
   const isValid = form.title.trim().length > 0;
   const isTitleTooLong = form.title.length > 30;
 
-  function handleSubmit() {
+  // 파일 선언
+  const {
+    files,
+    isDragging,
+    setIsDragging,
+    uploadedFile,
+    addFiles,
+    removeFiles,
+    clearFiles,
+  } = useFileUpload(accessToken, "TASK");
+
+  async function handleSubmit() {
     if (!isValid) return;
 
     const data = {
@@ -136,11 +105,28 @@ export default function TaskNew() {
       dueDate: form.dueDate,
     };
 
-    createTask(accessToken, data).then((res) => {
-      if (!res) return;
+    try {
+      const response = await createTask(accessToken, data);
+      const taskId = Number(response.id);
+
+      // 파일 저장
+      if (uploadedFile?.filePath) {
+        await saveFile(accessToken, {
+          ...uploadedFile,
+          refType: "TASK",
+          refId: taskId,
+        });
+      }
+
       setSubmitted(true);
-      setTimeout(() => navigate("/tasks"), 1600);
-    });
+
+      setTimeout(() => navigate("/tasks"), 1800);
+    } catch (error) {
+      console.error("업무 등록 실패", error);
+    }
+
+    // 파일 초기화
+    clearFiles();
   }
 
   if (submitted) {

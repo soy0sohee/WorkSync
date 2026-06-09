@@ -95,22 +95,6 @@ export default function BoardNew() {
     });
   }, [boardId, postId, accessToken]);
 
-  function handleFileDrop(e) {
-    e.preventDefault();
-    setIsDragging(false);
-    addFiles(Array.from(e.dataTransfer.files));
-  }
-
-  function handleFileInput(e) {
-    if (e.target.files) addFiles(Array.from(e.target.files));
-  }
-
-  // 파일 삭제
-  const handleRemoveFile = async (index) => {
-    await removeFiles(index);
-    setForm((prev) => ({ ...prev, profileImage: null }));
-  };
-
   // 저장
   async function handleSubmit() {
     if (!accessToken) return;

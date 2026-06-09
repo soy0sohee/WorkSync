@@ -91,11 +91,13 @@ export default function BoardNew() {
       const postId = response;
 
       // 파일 저장
-      await saveFile(accessToken, {
-        ...uploadedFile,
-        refType: "POST",
-        refId: postId,
-      });
+      if (uploadedFile?.filePath) {
+        await saveFile(accessToken, {
+          ...uploadedFile,
+          refType: "POST",
+          refId: postId,
+        });
+      }
 
       setSubmitted(true);
 

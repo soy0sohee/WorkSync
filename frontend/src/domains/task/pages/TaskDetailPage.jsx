@@ -2,14 +2,22 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Download, Pencil } from "lucide-react";
 import useAuthContext from "../../../store/AuthContext";
-import { getTaskById, deleteTask, getMyInfo } from "../services/taskApi";
+import {
+  getTaskById,
+  deleteTask,
+  getMyInfo,
+  getEmployees,
+} from "../services/taskApi";
 import {
   WSAvatar,
   WSButton,
   WSCard,
   WSProgress,
 } from "../../../components/common/CommonWidgets";
+import { WSFileList } from "../../../components/common/FormComponents";
 import s from "./TaskDetailPage.module.css";
+import useFileUpload from "../../../hooks/useFileUpload";
+import { getFile, saveFile, deleteFile } from "../../file/services/FileApi";
 
 export default function TaskDetail() {
   const { id } = useParams();
@@ -18,9 +26,28 @@ export default function TaskDetail() {
   const [task, setTask] = useState(null);
   const [myId, setMyId] = useState(null);
   const [role, setRole] = useState(null);
+  const [profile, setProfile] = useState([]); // 목록 프로필이미지
+
+  // 파일 선언
+  const {
+    files,
+    setFiles,
+    isDragging,
+    setIsDragging,
+    uploadedFile,
+    addFiles,
+    removeFiles,
+    clearFiles,
+  } = useFileUpload(accessToken, "TASK", id);
 
   useEffect(() => {
     if (!accessToken) return;
+
+    // 전 직원 프로필
+    getEmployees(accessToken).then((data) => {
+      setProfile(Array.isArray(data) ? data : []);
+    });
+
     getMyInfo(accessToken).then((data) => {
       if (!data) return;
 
@@ -37,7 +64,39 @@ export default function TaskDetail() {
 
       setTask(data);
     });
+
+    // 파일 데이터 불러오기
+    if (!accessToken || !id) return;
+    getFile(accessToken, "TASK", id).then((data) => {
+      const fileList = Array.isArray(data.data) ? data.data : [];
+      // console.log(fileList);
+      setFiles(
+        fileList.map((f) => ({
+          file: {
+            name: f.originalName,
+            size: f.fileSize,
+          },
+          url: f.filePath,
+          refType: f.refType,
+          refId: f.refId,
+        })),
+      );
+    });
   }, [accessToken, id]);
+
+  // 파일 다운로드
+  const handleDownload = async (file, idx) => {
+    const response = await fetch(file.url);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  };
 
   if (!task) {
     return <div>로딩 중...</div>;
@@ -81,14 +140,28 @@ export default function TaskDetail() {
                   <p className={s.infoLabel}>담당자</p>
                   <div className={s.infoValue}>
                     <div className={s.assigneeValue}>
-                      <WSAvatar src={null} name={task.assigneeName} size={24} />
+                      <WSAvatar
+                        src={
+                          profile.find((p) => p.id === task.assigneeId)
+                            ?.profileImage ?? null
+                        }
+                        name={task.assigneeName}
+                        size={24}
+                      />
                       <span>{task.assigneeName}</span>
                     </div>
                   </div>
                   <p className={s.infoLabel}>작성자</p>
                   <div className={s.infoValue}>
                     <div className={s.assigneeValue}>
-                      <WSAvatar src={null} name={task.creatorName} size={24} />
+                      <WSAvatar
+                        src={
+                          profile.find((p) => p.id === task.creatorId)
+                            ?.profileImage ?? null
+                        }
+                        name={task.creatorName}
+                        size={24}
+                      />
                       <span>{task.creatorName}</span>
                     </div>
                   </div>
@@ -107,18 +180,14 @@ export default function TaskDetail() {
 
         <div className={s.colSide}>
           <WSCard title="첨부 파일" subtitle="1개 파일 업로드">
-            <div className={s.attachRow}>
-              <div className={s.attachLeft}>
-                <div className={s.attachIcon}>XLSX</div>
-                <div>
-                  <p className={s.attachName}>Q3_예산_요청.xlsx</p>
-                  <p className={s.attachSize}>1.2 MB</p>
-                </div>
-              </div>
-              <button className={s.attachDl}>
-                <Download size={18} />
-              </button>
-            </div>
+            {files ? (
+              <WSFileList
+                files={files.map(({ file, url }) => ({ ...file, url }))} //화면에 파일 리스트 보여줌
+                onDownload={handleDownload}
+              />
+            ) : (
+              <></>
+            )}
           </WSCard>
 
           <div className={s.actionsCol}>

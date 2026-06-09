@@ -13,7 +13,7 @@ export async function getTaskList(accessToken, page = 0, size = 10, status) {
   })
     .then((response) => response.json())
     .then((json) => {
-      console.log(json);
+      // console.log(json);
       return json.data;
     })
     .catch((error) => {
@@ -32,7 +32,7 @@ export async function getMyTaskList(accessToken, page = 0, size = 10) {
   })
     .then((response) => response.json())
     .then((json) => {
-      console.log(json);
+      // console.log(json);
       return json.data;
     })
     .catch((error) => {
@@ -59,7 +59,7 @@ export async function getTasksByDepartment(
   )
     .then((response) => response.json())
     .then((json) => {
-      console.log(json);
+      // console.log(json);
       return json.data;
     })
     .catch((error) => {
@@ -78,7 +78,7 @@ export async function getTaskById(accessToken, taskId) {
   })
     .then((response) => response.json())
     .then((json) => {
-      console.log(json);
+      // console.log(json);
       return json.data;
     })
     .catch((error) => {
@@ -97,7 +97,7 @@ export async function getEmployees(accessToken) {
   })
     .then((response) => response.json())
     .then((json) => {
-      console.log(json);
+      // console.log(json);
       return json.data;
     })
     .catch((error) => {
@@ -117,7 +117,6 @@ export async function createTask(accessToken, data) {
   })
     .then((response) => response.json())
     .then((json) => {
-      console.log(json);
       return json.data;
     })
     .catch((error) => {
@@ -137,7 +136,7 @@ export async function updateTask(accessToken, taskId, data) {
   })
     .then((response) => response.json())
     .then((json) => {
-      console.log(json);
+      // console.log(json);
       return json.data;
     })
     .catch((error) => console.log("에러발생 : " + error));
@@ -153,11 +152,11 @@ export async function deleteTask(accessToken, taskId, data) {
     },
   })
     .then((response) => {
-      console.log("삭제 상태코드 : " + response.status);
+      // console.log("삭제 상태코드 : " + response.status);
       return response.json();
     })
     .then((json) => {
-      console.log("삭제 응답 : " + json);
+      // console.log("삭제 응답 : " + json);
     })
     .catch((error) => console.log("에러발생 : " + error));
 }
@@ -172,11 +171,11 @@ export async function getMyInfo(accessToken, data) {
     },
   })
     .then((response) => {
-      console.log("상태코드 : " + response.status);
+      // console.log("상태코드 : " + response.status);
       return response.json();
     })
     .then((json) => {
-      console.log(json);
+      // console.log(json);
       return json.data;
     })
     .catch((error) => console.log("에러발생 : " + error));

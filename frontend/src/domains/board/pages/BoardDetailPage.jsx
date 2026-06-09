@@ -85,6 +85,7 @@ export default function BoardDetail() {
     });
   }, [boardId, postId, accessToken]);
 
+  // 파일 다운로드
   const handleDownload = async (file, idx) => {
     const response = await fetch(file.url);
     const blob = await response.blob();

@@ -6,6 +6,7 @@ import {
   getTaskList,
   getTasksByDepartment,
   getMyInfo,
+  getEmployees,
 } from "../services/taskApi";
 import {
   WSAvatar,
@@ -43,11 +44,17 @@ export default function Tasks() {
   const { accessToken } = useAuthContext();
   const [role, setRole] = useState(null);
   const [departmentId, setDepartmentId] = useState(null);
+  const [profile, setProfile] = useState([]); // 목록 프로필이미지
   const navigate = useNavigate();
 
   //내 정보 불러오기
   useEffect(() => {
     if (!accessToken) return;
+
+    // 전 직원 프로필
+    getEmployees(accessToken).then((data) => {
+      setProfile(Array.isArray(data) ? data : []);
+    });
 
     getMyInfo(accessToken).then((data) => {
       if (!data) return;
@@ -150,7 +157,10 @@ export default function Tasks() {
                 <p className={s.progress}>{task.progress}%</p>
                 <div className={s.assignee}>
                   <WSAvatar
-                    src={null}
+                    src={
+                      profile.find((p) => p.id === task.assigneeId)
+                        ?.profileImage ?? null
+                    }
                     name={task.assigneeName}
                     size={28}
                   />

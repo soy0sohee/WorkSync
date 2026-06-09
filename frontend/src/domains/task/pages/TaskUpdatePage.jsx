@@ -10,7 +10,6 @@ import {
 import useAuthContext from "../../../store/AuthContext";
 import { ArrowLeft, Paperclip, CheckCircle, Pencil } from "lucide-react";
 import { WSCard, WSButton } from "../../../components/common/CommonWidgets";
-
 import {
   WSInput,
   WSSelect,
@@ -20,6 +19,8 @@ import {
   WSFileList,
 } from "../../../components/common/FormComponents";
 import s from "./TaskCreatePage.module.css";
+import useFileUpload from "../../../hooks/useFileUpload";
+import { getFile, saveFile, deleteFile } from "../../file/services/FileApi";
 
 const STATUS_OPTIONS = [
   { key: "TODO", label: "대기중" },
@@ -61,20 +62,23 @@ export default function TaskUpdate() {
     startDate: "",
     dueDate: "",
   });
-  const [files, setFiles] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [saved, setSaved] = useState(false);
   const [role, setRole] = useState(null);
   const [myDepartmentId, setMyDepartmentId] = useState(null);
   const [myId, setMyId] = useState(null);
 
-  function validationFile(file) {
-    const errors = [];
-    const ext = "." + file.name.split(".").pop().toLowerCase();
-
-    return errors;
-  }
+  // 파일 선언
+  const {
+    files,
+    setFiles,
+    isDragging,
+    setIsDragging,
+    uploadedFile,
+    addFiles,
+    removeFiles,
+    clearFiles,
+  } = useFileUpload(accessToken, "TASK", taskId);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -111,29 +115,25 @@ export default function TaskUpdate() {
         dueDate: data.dueDate,
       });
     });
-  }, [accessToken, taskId]);
 
-  function addFiles(newFiles) {
-    if (!newFiles || newFiles.length === 0) {
-      return;
-    }
-
-    const validated = newFiles.map((file) => ({
-      file: file,
-      errors: validationFile(file),
-    }));
-
-    const validOnly = validated.filter((item) => item.errors.length === 0);
-
-    setFiles((prev) => {
-      const merged = [...prev, ...validOnly];
-      return merged.slice(0, 10);
+    // 파일 데이터 불러오기
+    if (!accessToken || !taskId) return;
+    getFile(accessToken, "TASK", taskId).then((data) => {
+      const fileList = Array.isArray(data.data) ? data.data : [];
+      // console.log(fileList);
+      setFiles(
+        fileList.map((f) => ({
+          file: {
+            name: f.originalName,
+            size: f.fileSize,
+          },
+          url: f.filePath,
+          refType: f.refType,
+          refId: f.refId,
+        })),
+      );
     });
-  }
-
-  function removeFiles(index) {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  }
+  }, [accessToken, taskId]);
 
   const isValid = form.title.trim().length > 0;
   const isTitleTooLong = form.title.length > 30;
