@@ -8,6 +8,8 @@ import {
   getApprovalById,
   deleteApproval,
   getPendingApproval,
+  getReferenceApprovals,
+  getApprovalnbox,
 } from "../services/approvalApi";
 import {
   WSAvatar,
@@ -22,6 +24,12 @@ const STATUS_CONFIG = {
   REJECTED: { label: "반려", bg: "#FEE2E2", text: "#991B1B" },
 };
 
+const BOX_OPTIONS = [
+  { key: "my", label: "기안함" },
+  { key: "inbox", label: "결재함" },
+  { key: "reference", label: "참조함" },
+];
+
 const STATUS_OPTIONS = [
   { key: "all", label: "전체" },
   { key: "IN_PROGRESS", label: "대기" },
@@ -34,11 +42,25 @@ export default function Approval() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [openDropdown, setOpenDropdown] = useState(null);
-  // const [statusFilter, setStatusFilter] = useState("all");
-  const [status, setStatus] = useState("all");
   const navigate = useNavigate();
   const { accessToken } = useAuthContext();
   const [myApprovals, setMyApprovals] = useState([]);
+  const [boxType, setBoxType] = useState("my"); // 기안함 / 결재함 / 참조함
+  const [status, setStatus] = useState("all"); // 전체 / 대기 / 승인 / 반려
+  const [docs, setDocs] = useState([]);
+
+  // boxType of statusFilter 바뀔 때 마다 API 호출
+  useEffect(() => {
+    if (!accessToken) return;
+
+    if (boxType === "my") {
+      getMyApprovals(accessToken, status).then((data) => setDocs(data ?? []));
+    } else if (boxType === "inbox") {
+      getApprovalnbox(accessToken, status).then((data) => setDocs(data ?? []));
+    } else if (boxType === "reference") {
+      getReferenceApprovals(accessToken).then((data) => setDocs(data ?? []));
+    }
+  }, [accessToken, boxType, status]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -64,13 +86,13 @@ export default function Approval() {
     });
   }, [accessToken, status]);
 
-  const filtered = (myApprovals ?? []).filter((doc) => {
+  const filtered = (docs ?? []).filter((doc) => {
     const matchSearch =
       doc.title
         .replace(/\s/g, "")
         .toLowerCase()
         .includes(search.replace(/\s/g, "").toLowerCase()) ||
-      doc.id
+      String(doc.id)
         .replace(/\s/g, "")
         .toLowerCase()
         .includes(search.replace(/\s/g, "").toLowerCase());
@@ -78,8 +100,10 @@ export default function Approval() {
     return matchSearch && matchStatus;
   });
 
-  const perPage = 10;
+  const perPage = 9;
   const paginatedDocs = filtered.slice((page - 1) * perPage, page * perPage);
+  const boxLabel =
+    BOX_OPTIONS.find((o) => o.key === boxType)?.label || "기안함";
   const statusLabel =
     STATUS_OPTIONS.find((o) => o.key === status)?.label || "전체";
 
@@ -91,20 +115,21 @@ export default function Approval() {
             <div className={s.dd}>
               <button
                 onClick={() =>
-                  setOpenDropdown(openDropdown === "status" ? null : "status")
+                  setOpenDropdown(openDropdown === "box" ? null : "box")
                 }
                 className={s.ddBtn}
               >
                 <span>{statusLabel}</span>
                 <ChevronDown size={14} color="#9CA3AF" />
               </button>
-              {openDropdown === "status" && (
+              {openDropdown === "box" && (
                 <div className={s.ddMenu}>
-                  {STATUS_OPTIONS.map((item) => (
+                  {BOX_OPTIONS.map((item) => (
                     <button
                       key={item.key}
                       onClick={() => {
-                        setStatus(item.key);
+                        setBoxType(item.key);
+                        setStatus("all");
                         setOpenDropdown(null);
                         setPage(1);
                       }}
@@ -116,13 +141,47 @@ export default function Approval() {
                 </div>
               )}
             </div>
+            {/* 전체/대기/승인/반려 상태 드롭다운 (참조함에서는 숨김) */}
+            {boxType !== "reference" && (
+              <div className={s.dd}>
+                <button
+                  onClick={() =>
+                    setOpenDropdown(openDropdown === "status" ? null : "status")
+                  }
+                  className={s.ddBtn}
+                >
+                  <span>{statusLabel}</span>
+                  <ChevronDown size={14} color="#9CA3AF" />
+                </button>
+                {openDropdown === "status" && (
+                  <div className={s.ddMenu}>
+                    {STATUS_OPTIONS.map((item) => (
+                      <button
+                        key={item.key}
+                        onClick={() => {
+                          setStatusFilter(item.key);
+                          setPage(1);
+                          setOpenDropdown(null);
+                        }}
+                        className={s.ddItem}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <div className={s.search}>
               <Search size={16} className={s.searchIcon} />
               <input
                 type="text"
                 placeholder="검색어를 입력하세요"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 className={s.searchInput}
               />
             </div>

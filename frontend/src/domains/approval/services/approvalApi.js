@@ -63,6 +63,39 @@ export async function getMyApprovals(accessToken, status = "all") {
     });
 }
 
+// 결재함 - 내가 결재선에 포함된 문서 전체 (상태 필터링 가능)
+export async function getApprovalnbox(accessToken, status) {
+  const url =
+    status && status !== " all"
+      ? `${BASE_URL}/approvals/inbox?status=${status}`
+      : `${BASE_URL}/approvals/inbox?`;
+
+  return fetch(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((json) => {
+      return json.data ?? [];
+    })
+    .catch((error) => console.log("에러발생 : " + error));
+}
+
+// 참조함 - 내가 REFERENCE로 지정된 문서
+export async function getReferenceApprovals(accessToken) {
+  return await fetch(`${BASE_URL}/approvals/reference`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((json) => {
+      return json.data ?? [];
+    })
+    .catch((error) => console.log("에러발생 : " + error));
+}
+
 // 전자결재 상세조회
 export async function getApprovalById(accessToken, id) {
   return await fetch(`${BASE_URL}/approvals/${id}`, {
