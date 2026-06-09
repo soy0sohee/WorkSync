@@ -9,7 +9,7 @@ import {
   deleteApproval,
   getPendingApproval,
   getReferenceApprovals,
-  getApprovalnbox,
+  getApprovalInbox,
 } from "../services/approvalApi";
 import {
   WSAvatar,
@@ -56,7 +56,7 @@ export default function Approval() {
     if (boxType === "my") {
       getMyApprovals(accessToken, status).then((data) => setDocs(data ?? []));
     } else if (boxType === "inbox") {
-      getApprovalnbox(accessToken, status).then((data) => setDocs(data ?? []));
+      getApprovalInbox(accessToken, status).then((data) => setDocs(data ?? []));
     } else if (boxType === "reference") {
       getReferenceApprovals(accessToken).then((data) => setDocs(data ?? []));
     }
@@ -130,7 +130,9 @@ export default function Approval() {
                       onClick={() => {
                         setBoxType(item.key);
                         setStatus("all");
-                        setOpenDropdown(null);
+                        setOpenDropdown(
+                          openDropdown === "boxType" ? null : "boxType",
+                        );
                         setPage(1);
                       }}
                       className={s.ddItem}
@@ -159,7 +161,7 @@ export default function Approval() {
                       <button
                         key={item.key}
                         onClick={() => {
-                          setStatusFilter(item.key);
+                          setStatus(item.key);
                           setPage(1);
                           setOpenDropdown(null);
                         }}

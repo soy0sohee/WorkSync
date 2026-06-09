@@ -64,11 +64,11 @@ export async function getMyApprovals(accessToken, status = "all") {
 }
 
 // 결재함 - 내가 결재선에 포함된 문서 전체 (상태 필터링 가능)
-export async function getApprovalnbox(accessToken, status) {
+export async function getApprovalInbox(accessToken, status) {
   const url =
-    status && status !== " all"
+    status && status !== "all"
       ? `${BASE_URL}/approvals/inbox?status=${status}`
-      : `${BASE_URL}/approvals/inbox?`;
+      : `${BASE_URL}/approvals/inbox`;
 
   return fetch(url, {
     headers: {
