@@ -52,6 +52,15 @@ public class NotificationService {
         }
 
         notification.markAsRead();
+
+        // (webSocket) 실시간 단건 읽음 처리 - isRead = false 인 것만 카운트
+        Long unreadCount = notificationRepository.countByReceiverIdAndIsReadFalse(myId);
+
+        messagingTemplate.convertAndSendToUser(
+                String.valueOf(myId),
+                "queue/notifications/unread-count",
+                unreadCount
+        );
     }
 
     // 전체 읽음 처리
@@ -59,6 +68,13 @@ public class NotificationService {
     public void readAllNotifications(Long myId) {
         notificationRepository.findByReceiverIdAndIsReadFalseOrderByCreatedAtDesc(myId)
                 .forEach(Notification::markAsRead);
+
+        // (webSocket) 실시간 전체 읽음 처리 - isRead = false 인 것만 카운트
+        messagingTemplate.convertAndSendToUser(
+                String.valueOf(myId),
+                "queue/notifications/unread-count",
+                0L // 안읽음
+        );
     }
 
     // 알림 전송 (내부용 — 다른 서비스에서 호출)
@@ -79,7 +95,7 @@ public class NotificationService {
 
         notificationRepository.save(notification);
 
-        // webSocket 실시간 안읽음 처리
+        // (webSocket) 실시간 알림 전송 - isRead = false 인 것만 카운트
         Long unreadCount = notificationRepository.countByReceiverIdAndIsReadFalse(receiverId);
 
         messagingTemplate.convertAndSendToUser(
