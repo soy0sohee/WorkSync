@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 import {
   Search,
   Bell,
@@ -96,6 +98,7 @@ export function TopBar({ pathname }) {
   const [search, setSearch] = useState("");
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notifId, setNotifId] = useState(0);
   const page = PAGE_TITLES[pathname] || {
     title: "WorkSync",
     breadcrumb: ["홈"],
@@ -113,7 +116,6 @@ export function TopBar({ pathname }) {
     getNotifications(accessToken).then((data) => {
       // console.log(data);
       setNotifications(data || []);
-      console.log(data);
     });
 
     getUnreadCount(accessToken).then((data) => {
@@ -126,7 +128,7 @@ export function TopBar({ pathname }) {
     if (!notif) return;
 
     putNotifications(accessToken, notif.id);
-    setUnreadCount - 1;
+    setNotifId(notif.id);
 
     console.log(notif);
     if (notif.type === "APPROVAL") {
@@ -137,6 +139,29 @@ export function TopBar({ pathname }) {
       return navigate(`/tasks/${notif.targetId}`);
     }
   };
+
+  // WebSocket 실시간 알림 연동
+  useEffect(() => {
+    const client = new Client({
+      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      reconnectDelay: 5000,
+      connectHeaders: { Authorization: `Bearer ${accessToken}` },
+      onConnect: () => {
+        console.log("연결 성공");
+
+        client.subscribe(`/user/queue/notifications/unread-count`, (frame) => {
+          const data = JSON.parse(frame.body);
+          console.log(data);
+          setUnreadCount(data || 0);
+        });
+      },
+      onStompError: (error) => {
+        console.log("에러", error);
+      },
+    });
+    client.activate();
+    return () => client.deactivate();
+  }, [accessToken]);
 
   // AWAYS 상태 변경
   function handleAwayStatus() {
@@ -246,18 +271,6 @@ export function TopBar({ pathname }) {
                       setShowNotifs(false);
                     }}
                   >
-                    <div
-                      className={styles.notifIcon}
-                      style={{
-                        "--notif-color": notifColors[notif.type] || "#6B7280",
-                      }}
-                    >
-                      <WSAvatar
-                        src={notif.receiverProfileImage}
-                        name={notif.receiverName}
-                        size={36}
-                      />
-                    </div>
                     <div className={styles.notifBody}>
                       <p className={styles.notifText}>{notif.content}</p>
                       <p className={styles.notifTime}>{notif.createdAt}</p>
