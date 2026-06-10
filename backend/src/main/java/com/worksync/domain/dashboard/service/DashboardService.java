@@ -41,7 +41,6 @@ public class DashboardService {
             approvalLineRepository.findByApproverIdAndStatus(employeeId, ApprovalLineStatus.WAITING).size();
 
     // 내가 요청한 결재 건수
-
     long myRequestApprovalCount =
             approvalDocRepository.findByDrafterId(employeeId).size();
 
