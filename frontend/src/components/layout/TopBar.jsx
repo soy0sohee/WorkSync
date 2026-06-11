@@ -145,8 +145,6 @@ export function TopBar({ pathname }) {
     });
   }, [accessToken]);
 
-  console.log(notifications);
-
   // 알림 리스트 클릭
   const handleClick = (notif) => {
     if (!notif) return;
@@ -192,13 +190,17 @@ export function TopBar({ pathname }) {
 
         // 알림 목록 실시간 불러오기
         client.subscribe("/user/queue/notifications", (frame) => {
-          const notifList = frame.body;
-          setNotifications(notifList || []);
+          const notifList = JSON.parse(frame.body);
+          console.log("수신된 notifications:", notifList); // 이 로그 찍히나요?
+          console.log("현재 상태:", notifList);
+          setNotifications(Array.isArray(notifList) ? notifList : []);
         });
 
         // 알림 unread count 실시간 불러오기
         client.subscribe("/user/queue/notifications/unread-count", (frame) => {
-          const unreadCount = frame.body;
+          const unreadCount = JSON.parse(frame.body);
+          console.log("수신된 unreadCount:", unreadCount); // 이 로그 찍히나요?
+          console.log("현재 상태:", unreadCount);
           setUnreadCount(unreadCount || 0);
         });
       },
@@ -290,7 +292,7 @@ export function TopBar({ pathname }) {
         )}
       </div>
 
-      <div className={styles.bellWrap}>
+      <div className={styles.bellWrap} ref={notifRef}>
         <button
           onClick={() => {
             setShowNotifs(true);
@@ -308,10 +310,7 @@ export function TopBar({ pathname }) {
         </button>
 
         {showNotifs && (
-          <div
-            className={`${styles.dropdown} ${styles.notifDropdown}`}
-            ref={notifRef}
-          >
+          <div className={`${styles.dropdown} ${styles.notifDropdown}`}>
             <div className={styles.notifHeader}>
               <span className={styles.notifTitle}>알림</span>
               <span className={styles.notifCount}>새 알림 {unreadCount}건</span>
@@ -342,7 +341,7 @@ export function TopBar({ pathname }) {
         )}
       </div>
 
-      <div className={styles.profileWrap}>
+      <div className={styles.profileWrap} ref={profileRef}>
         <button
           onClick={() => {
             setShowProfile(true);
@@ -372,10 +371,7 @@ export function TopBar({ pathname }) {
         </button>
 
         {showProfile && (
-          <div
-            className={`${styles.dropdown} ${styles.profileDropdown}`}
-            ref={profileRef}
-          >
+          <div className={`${styles.dropdown} ${styles.profileDropdown}`}>
             {status === "ACTIVE" ? (
               <button
                 className={`${styles.menuItem} ${styles.profileAwayBadge}`}
