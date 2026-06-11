@@ -75,7 +75,20 @@ export default function Messenger() {
             ),
           );
         });
+      },
+    });
+    client.activate();
+    return () => client.deactivate();
+  }, []);
 
+  // WebSocket 실시간 구독 — 채팅방 입장 시 해당 방 토픽 구독, 나가면 해제
+  useEffect(() => {
+    if (!activeConvId) return;
+
+    const client = new Client({
+      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      reconnectDelay: 5000,
+      onConnect: () => {
         client.subscribe(`/topic/room/${activeConvId}`, (frame) => {
           const msg = JSON.parse(frame.body);
 
@@ -101,9 +114,10 @@ export default function Messenger() {
         });
       },
     });
+
     client.activate();
     return () => client.deactivate();
-  }, []);
+  }, [activeConvId, my]);
 
   const TEAM_MEMBERS = Array.isArray(teamMember)
     ? teamMember.map((member) => ({
