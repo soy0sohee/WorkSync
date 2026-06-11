@@ -154,6 +154,7 @@ public class ApprovalService {
                     .leaveType(LeaveType.valueOf(leaveTypeStr))
                     .startDate(startDate)
                     .endDate(endDate)
+                    .daysCount(daysCount)
                     .reason(items.get("reason"))
                     .build();
             leaveRequestRepository.save(leaveRequest);
