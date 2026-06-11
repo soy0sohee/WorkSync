@@ -111,23 +111,24 @@ public class ApprovalService {
             Map<String, String> items = request.getItems();
             System.out.println("items:" + items);
 
-
-            // 날짜 파싱
-            LocalDate startDate = LocalDate.parse(items.get("startDate"));
-            LocalDate endDate = LocalDate.parse(items.get("endDate"));
-
-            // 반차인 경우
-            if ("HALF".equals(items.get("leaveType"))) {
-                startDate = LocalDate.parse(items.get("halfDate"));
-                endDate = startDate;
+            // null 체크
+            String leaveTypeStr = items.get("leaveType");
+            if (leaveTypeStr == null || leaveTypeStr.isBlank()) {
+                throw new CustomException(ErrorCode.INVALID_LEAVE_TYPE);
             }
 
+            boolean isHalf = "HALF".equals(leaveTypeStr);
+
+            // 날짜 파싱
+            LocalDate startDate = isHalf
+                    ? LocalDate.parse(items.get("halfDate"))
+                    : LocalDate.parse(items.get("startDate"));
+            LocalDate endDate = isHalf ? startDate : LocalDate.parse(items.get("endDate"));
+
             // 일수 계산
-            BigDecimal daysCount = "HALF".equals(items.get("leaveType"))
+            BigDecimal daysCount = isHalf
                     ? BigDecimal.valueOf(0.5)
-                    : BigDecimal.valueOf(
-                    ChronoUnit.DAYS.between(startDate, endDate) + 1
-            );
+                    : BigDecimal.valueOf(ChronoUnit.DAYS.between(startDate, endDate) + 1);
 
             System.out.println("daysCount: " + daysCount);
 
@@ -135,21 +136,22 @@ public class ApprovalService {
             short leaveYear = (short) startDate.getYear();
             AnnualLeaveBalance balance = annualLeaveBalanceRepository
                     .findByEmployeeIdAndYear(drafterId, leaveYear)
-                    .orElseGet(()-> annualLeaveBalanceRepository.save(
+                    .orElseGet(() -> annualLeaveBalanceRepository.save(
                             AnnualLeaveBalance.builder()
                                     .employee(drafter)
                                     .year(leaveYear)
                                     .totalDays(BigDecimal.valueOf(15))
                                     .build()));
-                            if (balance.getRemainingDays().compareTo(daysCount)< 0) {
-                            throw new CustomException(ErrorCode.INSUFFICIENT_LEAVE_BALANCE);
-                            }
 
-                            //LeaveRequest 생성
+            if (balance.getRemainingDays().compareTo(daysCount) < 0) {
+                throw new CustomException(ErrorCode.INSUFFICIENT_LEAVE_BALANCE);
+            }
+
+            // LeaveRequest 생성
             LeaveRequest leaveRequest = LeaveRequest.builder()
                     .employee(drafter)
                     .approvalDoc(doc)
-                    .leaveType(LeaveType.valueOf(items.get("leaveType")))
+                    .leaveType(LeaveType.valueOf(leaveTypeStr))
                     .startDate(startDate)
                     .endDate(endDate)
                     .reason(items.get("reason"))
