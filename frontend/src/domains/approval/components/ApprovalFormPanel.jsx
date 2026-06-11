@@ -306,6 +306,51 @@ function LeaveForm({
     }
   }, [myInfo]);
 
+  // 유효성 검사
+  const validate = () => {
+    if (!title.trim()) {
+      alert("제목을 입력하세요.");
+      return false;
+    }
+    if (!leaveType) {
+      alert("휴가 종류를 선택하세요.");
+      return false;
+    }
+    if (leaveType === "HALF") {
+      if (!halfDate) {
+        alert("반차 날짜를 입력하세요.");
+        return false;
+      }
+      if (!halfTime) {
+        alert("오전/오후를 선택하세요.");
+        return false;
+      }
+    } else {
+      if (!startDate) {
+        alert("휴가 시작일을 입력하세요.");
+        return false;
+      }
+      if (!endDate) {
+        alert("휴가 종료일을 입력하세요.");
+        return false;
+      }
+      if (startDate > endDate) {
+        alert("시작일이 종료일보다 늦을 수 없습니다.");
+        return false;
+      }
+    }
+    if (!formValues.reason?.trim()) {
+      alert("휴가 사유를 입력하세요.");
+      return false;
+    }
+
+    return true;
+  };
+
+  useEffect(() => {
+    validateRef.current = validate;
+  }, [title, formValues, leaveType, startDate, endDate, halfDate, halfTime]);
+
   return (
     <>
       {/* 기본 정보 */}
@@ -558,6 +603,29 @@ function PurchaseForm({
       }));
     }
   }, [myInfo]);
+
+  // 유효성 검사
+  const validate = () => {
+    if (!title.trim()) {
+      alert("제목을 입력하세요.");
+      return false;
+    }
+    if (!formValues.reason?.trim()) {
+      alert("지출 사유를 입력하세요.");
+      return false;
+    }
+    if (
+      rows.some((r) => !r.description || !r.amount || Number(r.amount) <= 0)
+    ) {
+      alert("모든 항목을 입력하세요");
+      return false;
+    }
+    return true;
+  };
+
+  useEffect(() => {
+    validateRef.current = validate;
+  }, [title, formValues, rows]);
 
   return (
     <>
@@ -820,6 +888,37 @@ function BusinessTripForm({
       setInitialized(true);
     } catch {}
   }, [formValues.travelers, formValues.expenses]);
+
+  // 유효성 검사
+  const validate = () => {
+    if (!title.trim()) {
+      alert("제목을 입력하세요.");
+      return false;
+    }
+    if (!formValues.executionStartDate || !formValues.executionEndDate) {
+      alert("시행 일자를 입력하세요.");
+      return false;
+    }
+    if (rows.some((r) => !r.empNo)) {
+      alert("지출 사유를 입력하세요.");
+      return false;
+    }
+    if (formValues.destination?.trim()) {
+      alert("출장지를 입력하세요.");
+      return false;
+    }
+    if (
+      expenses.some((r) => !r.category || !r.amount || Number(r.amount) <= 0)
+    ) {
+      alert("출장비 항목과 금액을 입력하세요.");
+      return false;
+    }
+    return true;
+  };
+
+  useEffect(() => {
+    validateRef.current = validate;
+  }, [title, formValues, rows, expenses]);
 
   const EXPENSE_CATEGORIES = ["교통비", "숙박비", "식비", "기타"];
 

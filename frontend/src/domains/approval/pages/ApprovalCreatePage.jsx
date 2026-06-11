@@ -171,9 +171,6 @@ export default function ApprovalNew() {
   };
 
   const handleSubmit = async () => {
-    if (!isValid) return;
-    // 제출 버튼 클릭 핸들러 안에서
-
     // items 중 amount는 숫자 items는 배열로 보낼 시 오류터짐 방지
     const rawItems = { ...formValues };
     // Map<String, String> 맞게 모든 값을 문자열로 변환
@@ -503,10 +500,17 @@ export default function ApprovalNew() {
           <div className={s.actionsCol}>
             <button
               onClick={() => {
+                // 결재자 체크
+                if (approvers.length === 0) {
+                  alert("결재자를 최소 1명 추가하세요.");
+                  return;
+                }
+                // 폼 유효성 체크
                 if (validateRef.current && !validateRef.current()) return;
+                // 제출
                 handleSubmit();
               }}
-              disabled={isLoading}
+              disabled={isLoading || !isValid}
               className={s.submitBtn}
             >
               <Send size={16} />
