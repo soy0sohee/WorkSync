@@ -105,6 +105,27 @@ export function TopBar({ pathname }) {
     breadcrumb: ["홈"],
   };
 
+  // 외부 클릭 감지
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      // 알림 닫기
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifs(false);
+      }
+      // 프로필 닫기
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setShowProfile(false);
+      }
+    };
+
+    // 마우스 클릭 감지
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
   // 내 데이터 불러오기
   useEffect(() => {
     if (!accessToken) return;
@@ -133,7 +154,7 @@ export function TopBar({ pathname }) {
     setNotifId(notif.id);
 
     putNotifications(accessToken, {
-      targetType: notif.target,
+      targetType: notif.targetType,
       targetId: notif.targetId,
     });
 
@@ -159,7 +180,6 @@ export function TopBar({ pathname }) {
 
     const client = new Client({
       webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
-      // brokerURL: "ws://localhost:8080/ws",
       reconnectDelay: 5000,
       connectHeaders: { Authorization: `Bearer ${accessToken}` },
 
@@ -172,7 +192,9 @@ export function TopBar({ pathname }) {
 
         // 알림 목록 실시간 불러오기
         client.subscribe("/user/queue/notifications", (frame) => {
-          console.log("notifications 수신", frame);
+          console.log("notifications 수신", frame.body);
+          const notifList = frame.body;
+          setNotifications(notifList || []);
         });
 
         // 알림 unread count 실시간 불러오기
@@ -288,7 +310,10 @@ export function TopBar({ pathname }) {
         </button>
 
         {showNotifs && (
-          <div className={`${styles.dropdown} ${styles.notifDropdown}`}>
+          <div
+            className={`${styles.dropdown} ${styles.notifDropdown}`}
+            ref={notifRef}
+          >
             <div className={styles.notifHeader}>
               <span className={styles.notifTitle}>알림</span>
               <span className={styles.notifCount}>새 알림 {unreadCount}건</span>
@@ -349,7 +374,10 @@ export function TopBar({ pathname }) {
         </button>
 
         {showProfile && (
-          <div className={`${styles.dropdown} ${styles.profileDropdown}`}>
+          <div
+            className={`${styles.dropdown} ${styles.profileDropdown}`}
+            ref={profileRef}
+          >
             {status === "ACTIVE" ? (
               <button
                 className={`${styles.menuItem} ${styles.profileAwayBadge}`}
