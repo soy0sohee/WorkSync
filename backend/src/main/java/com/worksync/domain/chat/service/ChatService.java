@@ -236,7 +236,9 @@ public class ChatService {
 
         // 채팅방 구독자에게 실시간 메시지 전송 (WebSocket)
         MessageResponse response = MessageResponse.from(message);
+        System.out.println("메시지 전송 roomId: " + roomId);
         messagingTemplate.convertAndSend("/topic/room/" + roomId, response);
+
 
         return response;
     }
