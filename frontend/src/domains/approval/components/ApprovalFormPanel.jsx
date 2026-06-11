@@ -101,7 +101,7 @@ function ExpenseForm({
     if (
       rows.some((r) => !r.description || !r.amount || Number(r.amount) <= 0)
     ) {
-      alert("모든 항목을 입력하세요");
+      alert("사용 내역의 모든 항목을 입력하세요");
       return false;
     }
     return true;
@@ -316,6 +316,7 @@ function LeaveForm({
       alert("휴가 종류를 선택하세요.");
       return false;
     }
+
     if (leaveType === "HALF") {
       if (!halfDate) {
         alert("반차 날짜를 입력하세요.");
@@ -610,14 +611,21 @@ function PurchaseForm({
       alert("제목을 입력하세요.");
       return false;
     }
-    if (!formValues.reason?.trim()) {
-      alert("지출 사유를 입력하세요.");
+    if (!formValues.purpose?.trim()) {
+      alert("구매 용도를 입력하세요.");
+      return false;
+    }
+    if (!formValues.date) {
+      alert("요청 날짜를 입력하세요");
       return false;
     }
     if (
-      rows.some((r) => !r.description || !r.amount || Number(r.amount) <= 0)
+      rows.some(
+        (r) =>
+          !r.item || !r.quantity || !r.unitPrice || Number(r.quantity) <= 0,
+      )
     ) {
-      alert("모든 항목을 입력하세요");
+      alert("구매 요청 내역의 모든 항목을 입력하세요");
       return false;
     }
     return true;
@@ -899,18 +907,24 @@ function BusinessTripForm({
       alert("시행 일자를 입력하세요.");
       return false;
     }
-    if (rows.some((r) => !r.empNo)) {
-      alert("지출 사유를 입력하세요.");
+    if (formValues.executionStartDate > formValues.executionEndDate) {
+      alert("시작일이 종료일보다 늦을 수는 없습니다.");
       return false;
     }
-    if (formValues.destination?.trim()) {
+    if (rows.some((r) => !r.empNo)) {
+      alert("출장자 성명을 입력하세요.");
+      return false;
+    }
+    if (!formValues.destination?.trim()) {
       alert("출장지를 입력하세요.");
       return false;
     }
     if (
-      expenses.some((r) => !r.category || !r.amount || Number(r.amount) <= 0)
+      expenses.some(
+        (r) => !r.category || !r.amount || !r.note || Number(r.amount) <= 0,
+      )
     ) {
-      alert("출장비 항목과 금액을 입력하세요.");
+      alert("출장비 모든 항목과 금액을 입력하세요.");
       return false;
     }
     return true;
