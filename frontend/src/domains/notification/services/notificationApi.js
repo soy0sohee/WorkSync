@@ -39,13 +39,14 @@ export async function getUnreadCount(accessToken) {
 }
 
 // 알림 읽음 처리
-export async function putNotifications(accessToken, id) {
-  return await fetch(`${BASE_URL}/notifications/${id}/read`, {
+export async function putNotifications(accessToken, response) {
+  return await fetch(`${BASE_URL}/notifications/read`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
+    body: JSON.stringify(response),
   }).catch((error) => {
     console.log("에러발생: " + error);
   });

@@ -104,7 +104,6 @@ export function TopBar({ pathname }) {
     title: "WorkSync",
     breadcrumb: ["홈"],
   };
-  // const unreadCount = NOTIFICATIONS.filter((n) => !n.read).length;
 
   // 내 데이터 불러오기
   useEffect(() => {
@@ -125,12 +124,18 @@ export function TopBar({ pathname }) {
     });
   }, [accessToken]);
 
+  console.log(notifications);
+
   // 알림 리스트 클릭
   const handleClick = (notif) => {
     if (!notif) return;
 
-    putNotifications(accessToken, notif.id);
     setNotifId(notif.id);
+
+    putNotifications(accessToken, {
+      targetType: notif.target,
+      targetId: notif.targetId,
+    });
 
     console.log(notif);
     if (notif.type === "APPROVAL") {
@@ -167,7 +172,7 @@ export function TopBar({ pathname }) {
 
         // 알림 목록 실시간 불러오기
         client.subscribe("/user/queue/notifications", (frame) => {
-          console.log("notifications 수신", frame.body);
+          console.log("notifications 수신", frame);
         });
 
         // 알림 unread count 실시간 불러오기
