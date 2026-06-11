@@ -63,6 +63,7 @@ export default function Messenger() {
     const client = new Client({
       webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
       reconnectDelay: 5000,
+      connectHeaders: { Authorization: `Bearer ${accessToken}` },
       onConnect: () => {
         client.subscribe("/topic/status", (frame) => {
           const data = JSON.parse(frame.body);
@@ -81,13 +82,14 @@ export default function Messenger() {
     return () => client.deactivate();
   }, []);
 
-  // WebSocket 실시간 구독 — 채팅방 입장 시 해당 방 토픽 구독, 나가면 해제
+  // WebSocket 메시지 실시간 구독 — 채팅방 입장 시 해당 방 토픽 구독, 나가면 해제
   useEffect(() => {
     if (!activeConvId) return;
 
     const client = new Client({
       webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
       reconnectDelay: 5000,
+      connectHeaders: { Authorization: `Bearer ${accessToken}` },
       onConnect: () => {
         client.subscribe(`/topic/room/${activeConvId}`, (frame) => {
           const msg = JSON.parse(frame.body);
@@ -95,7 +97,7 @@ export default function Messenger() {
           setChatMessages((prev) => {
             const exists = prev.some((m) => m.id === msg.id);
             // 이미 있는 메시지면 무시 (중복 방지)
-            if (exists) return prev;
+            // if (exists) return prev;
             return [
               ...prev,
               {
