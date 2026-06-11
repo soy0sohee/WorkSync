@@ -10,6 +10,11 @@ import com.worksync.domain.approval.repository.ApprovalLineRepository;
 import com.worksync.domain.audit.service.AuditLogService;
 import com.worksync.domain.employee.entity.Employee;
 import com.worksync.domain.employee.repository.EmployeeRepository;
+import com.worksync.domain.leave.entity.AnnualLeaveBalance;
+import com.worksync.domain.leave.entity.LeaveRequest;
+import com.worksync.domain.leave.entity.LeaveType;
+import com.worksync.domain.leave.repository.AnnualLeaveBalanceRepository;
+import com.worksync.domain.leave.repository.LeaveRequestRepository;
 import com.worksync.domain.notification.entity.NotificationType;
 import com.worksync.domain.notification.service.NotificationService;
 import com.worksync.global.exception.CustomException;
@@ -19,7 +24,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +45,8 @@ public class ApprovalService {
     private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
     private final AuditLogService auditLogService;
+    private final AnnualLeaveBalanceRepository annualLeaveBalanceRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
 
     // 감사 로그 카테고리 / 액션명
     private static final String CATEGORY_APPROVAL = "APPROVAL";
@@ -88,6 +98,61 @@ public class ApprovalService {
         }
 
         approvalDocRepository.save(doc);
+
+// ─────────────────────────────────────────────
+// 전자결재 시스템을 통해 LEAVE(연차/휴가) 양식을 제출하면
+// ApprovalDoc만 생성되고 LeaveRequest는 생성되지 않는다.
+// 그런데 연차 차감 이벤트(onApprovalApproved)는
+// LeaveRequest를 조회해서 차감 처리하는 구조이므로,
+// LeaveRequest가 없으면 최종 승인이 되어도 연차가 차감되지 않는다.
+// 따라서 LEAVE 타입 결재 문서 생성 시 LeaveRequest도 함께 생성해야 한다.
+// ─────────────────────────────────────────────
+        if ("LEAVE".equals(form.getFormType())) {
+            Map<String, String> items = request.getItems();
+
+            // 날짜 파싱
+            LocalDate startDate = LocalDate.parse(items.get("startDate"));
+            LocalDate endDate = LocalDate.parse(items.get("endDate"));
+
+            // 반차인 경우
+            if ("HALF".equals(items.get("leaveType"))) {
+                startDate = LocalDate.parse(items.get("halfDate"));
+                endDate = startDate;
+            }
+
+            // 일수 계산
+            BigDecimal daysCount = "HALF".equals(items.get("leaveType"))
+                    ? BigDecimal.valueOf(0.5)
+                    : BigDecimal.valueOf(
+                    ChronoUnit.DAYS.between(startDate, endDate) + 1
+            );
+
+            // 잔여 연차 검증
+            short leaveYear = (short) startDate.getYear();
+            AnnualLeaveBalance balance = annualLeaveBalanceRepository
+                    .findByEmployeeIdAndYear(drafterId, leaveYear)
+                    .orElseGet(()-> annualLeaveBalanceRepository.save(
+                            AnnualLeaveBalance.builder()
+                                    .employee(drafter)
+                                    .year(leaveYear)
+                                    .totalDays(BigDecimal.valueOf(15))
+                                    .build()));
+                            if (balance.getRemainingDays().compareTo(daysCount)< 0) {
+                            throw new CustomException(ErrorCode.INSUFFICIENT_LEAVE_BALANCE);
+                            }
+
+                            //LeaveRequest 생성
+            LeaveRequest leaveRequest = LeaveRequest.builder()
+                    .employee(drafter)
+                    .approvalDoc(doc)
+                    .leaveType(LeaveType.valueOf(items.get("leaveType")))
+                    .startDate(startDate)
+                    .endDate(endDate)
+                    .reason(items.get("reason"))
+                    .build();
+            leaveRequestRepository.save(leaveRequest);
+        }
+
 
         // 결재선 생성 — doc 컬렉션에 직접 추가
         for (ApprovalCreateRequest.ApprovalLineRequest lineReq : request.getApprovalLines()) {
