@@ -11,8 +11,17 @@ import s from "./ApprovalFormPanel.module.css";
 // 지출 결의서 양식 컴포넌트
 // formValues: 현재 입력값 객체
 // setFormValues: 입력값 업데이트 함수
-function ExpenseForm({ formValues, setFormValues, myInfo, title, setTitle }) {
+function ExpenseForm({
+  formValues,
+  setFormValues,
+  myInfo,
+  title,
+  setTitle,
+  validateRef,
+}) {
   const [initialized, setInitialized] = useState(false);
+  const CATEGORIES = ["물품구입비", "교통비", "식비", "숙박비", "기타"];
+
   // 사용 내역 행 목록 (처음엔 빈 행 1개)
   const [rows, setRows] = useState([
     {
@@ -79,7 +88,28 @@ function ExpenseForm({ formValues, setFormValues, myInfo, title, setTitle }) {
     } catch {}
   }, [formValues.items]);
 
-  const CATEGORIES = ["물품구입비", "교통비", "식비", "숙박비", "기타"];
+  // 유효성 검사
+  const validate = () => {
+    if (!title.trim()) {
+      alert("제목을 입력하세요.");
+      return false;
+    }
+    if (!formValues.reason?.trim()) {
+      alert("지출 사유를 입력하세요.");
+      return false;
+    }
+    if (
+      rows.some((r) => !r.description || !r.amount || Number(r.amount) <= 0)
+    ) {
+      alert("모든 항목을 입력하세요");
+      return false;
+    }
+    return true;
+  };
+
+  useEffect(() => {
+    validateRef.current = validate;
+  }, [title, formValues, rows]);
 
   return (
     <>
@@ -241,7 +271,14 @@ function ExpenseForm({ formValues, setFormValues, myInfo, title, setTitle }) {
 // - reason: 휴가 사유
 
 // 연차 신청서 양식 컴포넌트
-function LeaveForm({ formValues, setFormValues, myInfo, title, setTitle }) {
+function LeaveForm({
+  formValues,
+  setFormValues,
+  myInfo,
+  title,
+  setTitle,
+  validateRef,
+}) {
   console.log("myInfo:", myInfo);
   // 특정 key의 값만 업데이트하는 함수
   // ex: update("reason", "개인 사유") -> formValues.reason = "개인 사유"
@@ -442,7 +479,14 @@ function LeaveForm({ formValues, setFormValues, myInfo, title, setTitle }) {
 // - items: 구매 목록 배열 (JSON 문자열)
 
 // 구매 요청서 양식 컴포넌트
-function PurchaseForm({ formValues, setFormValues, myInfo, title, setTitle }) {
+function PurchaseForm({
+  formValues,
+  setFormValues,
+  myInfo,
+  title,
+  setTitle,
+  validateRef,
+}) {
   const [initialized, setInitialized] = useState(false);
   // 구매 요청 행 목록
   const [rows, setRows] = useState([
@@ -696,6 +740,7 @@ function BusinessTripForm({
   title,
   setTitle,
   employees = [],
+  validateRef,
 }) {
   const [initialized, setInitialized] = useState(false);
   // 출장자 행 목록
@@ -724,14 +769,6 @@ function BusinessTripForm({
     setRows((prev) =>
       prev.map((r) => (r.id === id ? { ...r, [key]: value } : r)),
     );
-
-  const updateExpense = (id, key, value) => {
-    const updated = expenses.map((r) => {
-      r.id === id ? { ...r, [key]: value } : r;
-    });
-    setExpenses(updated);
-    setFormValues((prev) => ({ ...prev, expenses: updated }));
-  };
 
   // 합계 계산 (amount를 숫자로 변환 후 합산)
   const total = expenses.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
@@ -965,11 +1002,11 @@ function BusinessTripForm({
                 type="text"
                 placeholder="금액"
                 value={
-                  row.expense === "" ? "" : Number(row.expense).toLocaleString()
+                  row.amount === "" ? "" : Number(row.amount).toLocaleString()
                 }
                 onChange={(e) => {
-                  const raw = e.target.value.replace(/,/g, "");
-                  updateExpense(row.id, "expense", raw);
+                  const raw = e.target.value.replace(/[^0-9]/g, "");
+                  updateExpense(row.id, "amount", raw);
                 }}
                 className={s.tableInput}
                 style={{ flex: 1 }}
@@ -990,33 +1027,27 @@ function BusinessTripForm({
                 <Trash2 size={14} />
               </button>
             </div>
-            <div>
-              <label
-                className={s.label}
-                style={{
-                  marginTop: "10px",
-                }}
-              >
-                금액 합계
-              </label>
-              <div style={{ display: "flex" }}>
-                <input
-                  type="text"
-                  placeholder="산출 내역"
-                  className={s.input}
-                  value={
-                    row.amount === "" ? "" : Number(row.amount).toLocaleString()
-                  }
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/,/g, "");
-                    updateRow(row.id, "amount", raw);
-                  }}
-                />
-                <span></span>
-              </div>
-            </div>
           </>
         ))}
+        <div>
+          <label
+            className={s.label}
+            style={{
+              marginTop: "10px",
+            }}
+          >
+            금액 합계
+          </label>
+          <div style={{ display: "flex" }}>
+            <input
+              type="text"
+              className={s.input}
+              value={total ? Number(total).toLocaleString() : "0"}
+              readOnly
+            />
+            <span></span>
+          </div>
+        </div>
       </WSCard>
     </>
   );
@@ -1031,6 +1062,7 @@ export default function ApprovalFormPanel({
   title,
   setTitle,
   employees,
+  validateRef,
 }) {
   if (!selectedForm) return null;
 
@@ -1049,6 +1081,7 @@ export default function ApprovalFormPanel({
           myInfo={myInfo}
           title={title}
           setTitle={setTitle}
+          validateRef={validateRef}
         />
       )}
       {formType === "LEAVE" && myInfo && (
@@ -1058,6 +1091,7 @@ export default function ApprovalFormPanel({
           myInfo={myInfo}
           title={title}
           setTitle={setTitle}
+          validateRef={validateRef}
         />
       )}
       {formType === "PURCHASE" && myInfo && (
@@ -1067,6 +1101,7 @@ export default function ApprovalFormPanel({
           myInfo={myInfo}
           title={title}
           setTitle={setTitle}
+          validateRef={validateRef}
         />
       )}
       {formType === "BUSINESS_TRIP" && myInfo && (
@@ -1077,6 +1112,7 @@ export default function ApprovalFormPanel({
           title={title}
           setTitle={setTitle}
           employees={employees}
+          validateRef={validateRef}
         />
       )}
     </div>

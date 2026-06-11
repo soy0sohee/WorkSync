@@ -87,6 +87,7 @@ export default function ApprovalNew() {
   const [myInfo, setMyInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const { accessToken } = useAuthContext();
+  const validateRef = useRef(null);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -298,6 +299,7 @@ export default function ApprovalNew() {
             title={title}
             setTitle={setTitle}
             employees={employees}
+            validateRef={validateRef}
           />
           <WSCard
             title="첨부 파일"
@@ -500,8 +502,11 @@ export default function ApprovalNew() {
 
           <div className={s.actionsCol}>
             <button
-              onClick={handleSubmit}
-              disabled={!isValid || isLoading}
+              onClick={() => {
+                if (validateRef.current && !validateRef.current()) return;
+                handleSubmit();
+              }}
+              disabled={isLoading}
               className={s.submitBtn}
             >
               <Send size={16} />

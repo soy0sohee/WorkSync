@@ -332,7 +332,9 @@ function BusinessTripDetail({ items }) {
             <tbody>
               <tr>
                 <th>출장지</th>
-                <td>{items.destination ?? "-"}</td>
+                <td style={{ whiteSpace: "pre-wrap" }}>
+                  {items.destination ?? "-"}
+                </td>
               </tr>
             </tbody>
           </table>
