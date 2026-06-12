@@ -30,6 +30,8 @@ import {
 import { ConvItem } from "../components/ConvItem";
 import { NewConvModal } from "../components/NewConvModal";
 import s from "./ChatPage.module.css";
+import { putNotifications } from "../../notification/services/notificationApi";
+import { log } from "sockjs-client/dist/sockjs";
 
 export default function Messenger() {
   const { accessToken, myStatus } = useAuthContext();
@@ -50,9 +52,20 @@ export default function Messenger() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
+  // // 채팅방 입장해 있을 때, 새 메시지가 오면 바로 읽음 처리
+  // useEffect(() => {
+  //   if (!targetId || targetId === 0) return;
+  //   if (String(targetId) !== String(activeConvId)) return;
+
+  //   if (targetId === activeConvId) {
+
+  //   }
+  // }, [targetId, activeConvId]);
+
   // 멤버 데이터 불러오기
   useEffect(() => {
     if (!accessToken || !activeConvId) return;
+
     getMember(accessToken, activeConvId).then((data) => {
       setTeamMember(Array.isArray(data.data) ? data.data : []);
     });
@@ -93,11 +106,12 @@ export default function Messenger() {
       onConnect: () => {
         client.subscribe(`/topic/room/${activeConvId}`, (frame) => {
           const msg = JSON.parse(frame.body);
+          console.log(msg);
 
           setChatMessages((prev) => {
             const exists = prev.some((m) => m.id === msg.id);
             // 이미 있는 메시지면 무시 (중복 방지)
-            // if (exists) return prev;
+            if (exists) return prev;
             return [
               ...prev,
               {
@@ -120,7 +134,6 @@ export default function Messenger() {
     client.activate();
     return () => client.deactivate();
   }, [activeConvId, my]);
-
   const TEAM_MEMBERS = Array.isArray(teamMember)
     ? teamMember.map((member) => ({
         employeeId: member.employeeId,
@@ -130,6 +143,35 @@ export default function Messenger() {
         status: member.status,
       }))
     : [];
+
+  // 내 데이터 불러오기
+  useEffect(() => {
+    if (!accessToken) return;
+    getMyInfo(accessToken).then((data) => {
+      setMy(data.data || {});
+    });
+  }, [accessToken]);
+
+  // 대화 데이터 불러오기
+  useEffect(() => {
+    if (!accessToken) return;
+    getChatRoom(accessToken).then((data) => {
+      setConversation(Array.isArray(data.data) ? data.data : []);
+      setActiveConvId(data.data[0].id);
+    });
+  }, [accessToken, showNewConvModal]);
+  const CONVERSATIONS = conversation.map((conv) => ({
+    id: conv.id,
+    roomType: conv.roomType,
+    name: conv.name,
+    thumbnailImage: conv.thumbnailImage,
+    otherStatus: conv.otherStatus,
+    members: TEAM_MEMBERS,
+    lastMessage: conv.lastMessage,
+    lastMessageAt: formatTime(conv.lastMessageAt),
+    unreadCount: conv.unreadCount,
+    pinned: false,
+  }));
 
   // 메시지 데이터 불러오기
   useEffect(() => {
@@ -162,35 +204,6 @@ export default function Messenger() {
       );
     });
   }, [accessToken, activeConvId, my]);
-
-  // 내 데이터 불러오기
-  useEffect(() => {
-    if (!accessToken) return;
-    getMyInfo(accessToken).then((data) => {
-      setMy(data.data || {});
-    });
-  }, [accessToken]);
-
-  // 대화 데이터 불러오기
-  useEffect(() => {
-    if (!accessToken) return;
-    getChatRoom(accessToken).then((data) => {
-      setConversation(Array.isArray(data.data) ? data.data : []);
-      setActiveConvId(data.data[0].id);
-    });
-  }, [accessToken, showNewConvModal]);
-  const CONVERSATIONS = conversation.map((conv) => ({
-    id: conv.id,
-    roomType: conv.roomType,
-    name: conv.name,
-    thumbnailImage: conv.thumbnailImage,
-    otherStatus: conv.otherStatus,
-    members: TEAM_MEMBERS,
-    lastMessage: conv.lastMessage,
-    lastMessageAt: formatTime(conv.lastMessageAt),
-    unreadCount: conv.unreadCount,
-    pinned: false,
-  }));
 
   // 대화 리스트 클릭 시
   function handleConvClick(conv) {

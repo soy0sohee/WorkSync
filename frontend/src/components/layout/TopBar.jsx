@@ -156,7 +156,6 @@ export function TopBar({ pathname }) {
       targetId: notif.targetId,
     });
 
-    console.log(notif);
     if (notif.type === "APPROVAL") {
       return navigate(`/approval/${notif.targetId}`);
     } else if (notif.type === "MESSAGE") {
@@ -191,16 +190,12 @@ export function TopBar({ pathname }) {
         // 알림 목록 실시간 불러오기
         client.subscribe("/user/queue/notifications", (frame) => {
           const notifList = JSON.parse(frame.body);
-          console.log("수신된 notifications:", notifList); // 이 로그 찍히나요?
-          console.log("현재 상태:", notifList);
           setNotifications(Array.isArray(notifList) ? notifList : []);
         });
 
         // 알림 unread count 실시간 불러오기
         client.subscribe("/user/queue/notifications/unread-count", (frame) => {
           const unreadCount = JSON.parse(frame.body);
-          console.log("수신된 unreadCount:", unreadCount); // 이 로그 찍히나요?
-          console.log("현재 상태:", unreadCount);
           setUnreadCount(unreadCount || 0);
         });
       },
