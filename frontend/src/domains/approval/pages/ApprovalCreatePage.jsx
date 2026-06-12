@@ -172,7 +172,12 @@ export default function ApprovalNew() {
 
   const handleSubmit = async () => {
     // items 중 amount는 숫자 items는 배열로 보낼 시 오류터짐 방지
-    const rawItems = { ...formValues };
+    const rawItems = {
+      ...formValues,
+      name: myInfo?.name,
+      departmentName: myInfo?.departmentName,
+    };
+
     // Map<String, String> 맞게 모든 값을 문자열로 변환
     const stringifiedItems = {};
 
@@ -201,8 +206,6 @@ export default function ApprovalNew() {
       })),
       items: stringifiedItems,
     };
-
-    console.log("submit payload:", JSON.stringify(body));
 
     setIsLoading(true);
     const result = await createApproval(accessToken, body);
@@ -304,6 +307,7 @@ export default function ApprovalNew() {
             setTitle={setTitle}
             employees={employees}
             validateRef={validateRef}
+            isEditMode={false}
           />
           <WSCard
             title="첨부 파일"

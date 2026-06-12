@@ -278,8 +278,8 @@ function LeaveForm({
   title,
   setTitle,
   validateRef,
+  isEditMode,
 }) {
-  console.log("myInfo:", myInfo);
   // 특정 key의 값만 업데이트하는 함수
   // ex: update("reason", "개인 사유") -> formValues.reason = "개인 사유"
   const update = (key, value) =>
@@ -294,9 +294,23 @@ function LeaveForm({
   const [halfDate, setHalfDate] = useState("");
   const [halfTime, setHalfTime] = useState("");
 
-  // 마운트 시 leaveType만 즉시 세팅
+  // 수정화면일 때 기존값으로 동기화
   useEffect(() => {
-    setFormValues((prev) => ({ ...prev, leaveType: "ANNUAL" }));
+    console.log("isEditMode:", isEditMode);
+    if (isEditMode && formValues) {
+      if (formValues.leaveType) setLeaveType(formValues.leaveType);
+      if (formValues.startDate) setStartDate(formValues.startDate);
+      if (formValues.endDate) setEndDate(formValues.endDate);
+      if (formValues.halfDate) setHalfDate(formValues.halfDate);
+      if (formValues.halfTime) setHalfTime(formValues.halfTime);
+    }
+  }, [isEditMode, formValues]);
+
+  // 등록화면일 때만 연차 신청서로 초기값 세팅
+  useEffect(() => {
+    if (!isEditMode) {
+      setFormValues((prev) => ({ ...prev, leaveType: "ANNUAL" }));
+    }
   }, []);
 
   // myInfo 로드되면 부서/이름 세팅 (기존 유지)
@@ -1179,6 +1193,7 @@ export default function ApprovalFormPanel({
   setTitle,
   employees,
   validateRef,
+  isEditMode,
 }) {
   if (!selectedForm) return null;
 
@@ -1208,6 +1223,7 @@ export default function ApprovalFormPanel({
           title={title}
           setTitle={setTitle}
           validateRef={validateRef}
+          isEditMode={isEditMode}
         />
       )}
       {formType === "PURCHASE" && myInfo && (

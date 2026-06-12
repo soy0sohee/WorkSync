@@ -58,7 +58,8 @@ function LeaveDetail({ items, approval }) {
 
   useEffect(() => {
     if (!approval?.drafterId) return;
-    getLeaveBalance(accessToken, approval.drafterId).then((data) => { // 작성자 id를 넘겨서 작성자 잔여일 반환
+    getLeaveBalance(accessToken, approval.drafterId).then((data) => {
+      // 작성자 id를 넘겨서 작성자 잔여일 반환
       setBalance(data);
     });
   }, [accessToken, approval?.drafterId]);
@@ -401,7 +402,6 @@ export default function ApprovalDetail() {
     getMyInfo(accessToken).then((data) => {
       if (!data) return;
       setMe(data);
-      console.log("me.id : ", me?.id);
     });
   }, [accessToken]);
 

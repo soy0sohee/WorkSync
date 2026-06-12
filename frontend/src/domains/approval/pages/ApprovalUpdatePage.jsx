@@ -47,6 +47,7 @@ export default function ApprovalUpdate() {
   const [attachments, setAttachments] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
+  const validateRef = useRef(null);
 
   // 내 정보 불러오기
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function ApprovalUpdate() {
     if (!accessToken || !id) return;
     getApprovalById(accessToken, id).then((data) => {
       if (!data) return;
+      console.log("data.items:", data.items);
       setTitle(data.title);
       setSelectedForm({
         id: data.formId,
@@ -166,6 +168,8 @@ export default function ApprovalUpdate() {
             myInfo={myInfo}
             title={title}
             setTitle={setTitle}
+            validateRef={validateRef}
+            isEditMode={true}
           />
         </div>
 
