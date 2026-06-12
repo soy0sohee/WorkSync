@@ -34,3 +34,8 @@ replay_pid*
 
 # Frontend (별도 프로젝트 — 백엔드 브랜치에서 무시)
 frontend/
+
+# Env files
+.env
+.env.*
+!.env.example
