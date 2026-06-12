@@ -81,3 +81,24 @@ export async function getRecentPosts(accessToken) {
     return [];
   }
 }
+
+// 내 부서 팀원 출근 현황 (GET /api/attendance/department?date=2026-06-12)
+// 반환: [{ id, employeeId, employeeName, workDate, checkInTime, checkOutTime, status, createdAt }, ...]
+export async function getDepartmentAttendance(accessToken, date) {
+  return await fetch(`${BASE_URL}/attendance/department?date=${date}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((json) => {
+      console.log("[DepartmentAttendance]", json);
+      return json.data ?? [];
+    })
+    .catch((error) => {
+      console.log("부서 근태 에러발생: " + error);
+      return [];
+    });
+}
