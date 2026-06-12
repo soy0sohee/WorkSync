@@ -37,10 +37,6 @@ public class AnnualLeaveBalance {
     @Builder.Default
     private BigDecimal usedDays = BigDecimal.ZERO;
 
-    @Column(name = "pending_days", nullable = false, precision = 4, scale = 1)
-    @Builder.Default
-    private BigDecimal pendingDays = BigDecimal.ZERO;
-
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
@@ -50,12 +46,6 @@ public class AnnualLeaveBalance {
     }
 
     public BigDecimal getRemainingDays(){
-        return this.totalDays.subtract(this.usedDays).subtract(this.pendingDays);
-    }
-    public void addPendingDays(BigDecimal days) {
-        this.pendingDays = this.pendingDays.add(days);
-    }
-    public void subtractPendingDays(BigDecimal days){
-        this.pendingDays = this.pendingDays.subtract(days);
+        return this.totalDays.subtract(this.usedDays);
     }
 }
