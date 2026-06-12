@@ -11,7 +11,7 @@ import {
   Newspaper,
   CheckCircle2,
 } from "lucide-react";
-import { getDashboard, getPendingApprovals, getRecentPosts } from "../services/dashboardApi";
+import { getDashboard, getPendingApprovals, getRecentPosts, getDepartmentAttendance } from "../services/dashboardApi";
 import { getMyTaskList } from "../../task/services/taskApi";
 import { WSCard, WSStatCard, WSAvatar, WSButton } from "../../../components/common/CommonWidgets";
 import useAuthContext from "../../../store/AuthContext";
@@ -19,7 +19,6 @@ import s from "./DashboardPage.module.css";
 
 // ── 상수 ─────────────────────────────────────────────────────────────────────
 
-// 출근 상태 → 한글
 const ATTENDANCE_STATUS_LABEL = {
   NORMAL:      "정상 출근",
   LATE:        "지각",
@@ -27,21 +26,26 @@ const ATTENDANCE_STATUS_LABEL = {
   ABSENT:      "결근",
 };
 
-// 업무 상태 → 한글
 const TASK_STATUS_LABEL = {
   TODO:        "준비중",
   IN_PROGRESS: "진행 중",
   DONE:        "완료",
 };
 
-// 업무 상태 뱃지 색상 (CSS 없는 항목이라 inline style 사용)
 const TASK_STATUS_COLOR = {
   TODO:        { bg: "#f3f4f6", text: "#6B7280" },
   IN_PROGRESS: { bg: "#dbeafe", text: "#1A73E8" },
   DONE:        { bg: "#d1fae5", text: "#059669" },
 };
 
-// LocalDateTime → "2026.06.11" 포맷
+// LocalDateTime("2026-06-12T09:00:00") → "09:00" 포맷
+function formatTime(isoStr) {
+  if (!isoStr) return null;
+  const d = new Date(isoStr);
+  return d.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+}
+
+// LocalDateTime("2026-06-12T09:00:00") → "2026.06.12" 포맷
 function formatDate(isoStr) {
   if (!isoStr) return "";
   const d = new Date(isoStr);
@@ -53,11 +57,12 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { accessToken } = useAuthContext();
 
-  const [loading,      setLoading]      = useState(true);
-  const [dashboard,    setDashboard]    = useState(null);
-  const [tasks,        setTasks]        = useState([]); // GET /api/tasks/my
-  const [pendingDocs,  setPendingDocs]  = useState([]); // GET /api/approvals/pending
-  const [recentPosts,  setRecentPosts]  = useState([]); // GET /api/boards (NOTICE) → posts
+  const [loading,         setLoading]         = useState(true);
+  const [dashboard,       setDashboard]       = useState(null);
+  const [tasks,           setTasks]           = useState([]);    // GET /api/tasks/my
+  const [pendingDocs,     setPendingDocs]     = useState([]);    // GET /api/approvals/pending
+  const [recentPosts,     setRecentPosts]     = useState([]);    // GET /api/boards (NOTICE) → posts
+  const [teamAttendance,  setTeamAttendance]  = useState([]);    // GET /api/attendance/department
   const [emptyPosts,      setEmptyPosts]      = useState(false);
   const [emptyApprovals,  setEmptyApprovals]  = useState(false);
 
@@ -70,18 +75,21 @@ export default function DashboardPage() {
     try {
       setLoading(true);
 
-      // 4개 API 병렬 호출
-      const [dashboardRes, taskRes, approvalRes, postRes] = await Promise.all([
-        getDashboard(accessToken),          // → json.data (DashboardResponse)
-        getMyTaskList(accessToken),         // → json.data (Page<TaskResponse>)
-        getPendingApprovals(accessToken),   // → json.data[] (ApprovalListResponse[])
-        getRecentPosts(accessToken),        // → PostResponse[]
+      const today = new Date().toISOString().split("T")[0]; // "2026-06-12"
+
+      const [dashboardRes, taskRes, approvalRes, postRes, attendanceRes] = await Promise.all([
+        getDashboard(accessToken),                      // → DashboardResponse
+        getMyTaskList(accessToken),                     // → Page<TaskResponse>
+        getPendingApprovals(accessToken),               // → ApprovalListResponse[]
+        getRecentPosts(accessToken),                    // → PostResponse[]
+        getDepartmentAttendance(accessToken, today),    // → AttendanceResponse[]
       ]);
 
       setDashboard(dashboardRes ?? null);
-      setTasks(taskRes?.content ?? []);    // Page 구조에서 content 추출
+      setTasks(taskRes?.content ?? []);
       setPendingDocs(approvalRes ?? []);
       setRecentPosts(postRes ?? []);
+      setTeamAttendance(attendanceRes ?? []);
     } catch (error) {
       console.error("Dashboard API Error", error);
     } finally {
@@ -89,7 +97,7 @@ export default function DashboardPage() {
     }
   };
 
-  // 업무 진행률 계산
+  // 업무 진행률
   const taskProgress = useMemo(() => {
     if (!dashboard) return "0/0";
     const total =
@@ -109,10 +117,6 @@ export default function DashboardPage() {
   const sprintMonth = new Date().toLocaleDateString("ko-KR", {
     year: "numeric", month: "long",
   });
-
-  // 출근 상태 뱃지 CSS 클래스 결정
-  const attendanceBadgeClass =
-    dashboard?.checkedIn ? s.attendPresent : s.attendAbsent;
 
   if (loading || !dashboard) {
     return <div className={s.root}>로딩 중...</div>;
@@ -175,7 +179,7 @@ export default function DashboardPage() {
         {/* 왼쪽 2칸 */}
         <div className={`${s.mainCol} ${s.mainColLeft}`}>
 
-          {/* ─ 최근 게시글 — GET /api/boards?boardType=NOTICE → /posts ─ */}
+          {/* ─ 최근 게시글 ─ */}
           <WSCard
             title="최근 게시글"
             subtitle="공지사항"
@@ -226,7 +230,6 @@ export default function DashboardPage() {
                         </p>
                         <p className={s.postContent}>{post.content}</p>
                         <div className={s.postMeta}>
-                          {/* 실제 API에는 프로필 이미지 없음 → name으로 이니셜 아바타 */}
                           <span style={{ marginRight: 6 }}>
                             <WSAvatar name={post.authorName} size={21} />
                           </span>
@@ -242,7 +245,7 @@ export default function DashboardPage() {
             )}
           </WSCard>
 
-          {/* ─ 결재 대기 문서 — GET /api/approvals/pending ─ */}
+          {/* ─ 결재 대기 문서 ─ */}
           <WSCard
             title="결재 대기 문서"
             subtitle="처리가 필요한 문서"
@@ -296,7 +299,6 @@ export default function DashboardPage() {
                       <FileCheck size={16} className={s.approvalIcon} />
                     </div>
                     <div className={s.approvalBody}>
-                      {/* drafterName: 기안자 / submittedAt: 상신일 / formName: 양식명 */}
                       <p className={s.approvalTitle}>{doc.title}</p>
                       <p className={s.approvalMeta}>
                         {doc.drafterName} · {formatDate(doc.submittedAt)}
@@ -313,39 +315,34 @@ export default function DashboardPage() {
         {/* 오른쪽 1칸 */}
         <div className={s.mainCol}>
 
-          {/* ─ 오늘 출근 상태 — dashboard API 실데이터 ─ */}
-          <WSCard title="오늘 출근 상태" subtitle={`오늘, ${todayShort}`}>
-            <div className={s.attendList}>
-              {/* 출근 상태 */}
-              <div className={s.attendRow}>
-                <span className={s.attendName}>출근 상태</span>
-                <span className={`${s.attendBadge} ${attendanceBadgeClass}`}>
-                  {dashboard.checkedIn
-                    ? ATTENDANCE_STATUS_LABEL[dashboard.todayAttendanceStatus] ?? "출근"
-                    : "미출근"}
-                </span>
-              </div>
-              {/* 퇴근 여부 */}
-              <div className={s.attendRow}>
-                <span className={s.attendName}>퇴근 여부</span>
-                <span
-                  className={`${s.attendBadge} ${
-                    dashboard.checkedOut ? s.attendPresent : s.attendAbsent
-                  }`}
-                >
-                  {dashboard.checkedOut ? "퇴근 완료" : "근무중"}
-                </span>
-              </div>
-              {/* 잔여 연차 */}
-              {dashboard.remainingLeaveDays != null && (
-                <div className={s.attendRow}>
-                  <span className={s.attendName}>잔여 연차</span>
-                  <span className={`${s.attendBadge} ${s.attendPresent}`}>
-                    {dashboard.remainingLeaveDays}일
-                  </span>
+          {/* ─ 나의 팀 현황 — GET /api/attendance/department ─ */}
+          <WSCard title="나의 팀 현황" subtitle={`오늘, ${todayShort}`}>
+            {teamAttendance.length === 0 ? (
+              <div className={s.emptyBlock}>
+                <div className={`${s.emptyIconWrap} ${s.emptyIconWrapPosts}`}>
+                  <Users size={24} className={s.emptyIconPosts} />
                 </div>
-              )}
-            </div>
+                <p className={s.emptyTitle}>팀원 정보가 없습니다</p>
+                <p className={s.emptySub}>오늘 출근 기록이 있는 팀원이 없습니다.</p>
+              </div>
+            ) : (
+              <div className={s.attendList}>
+                {teamAttendance.map((a) => (
+                  <div key={a.employeeId} className={s.attendRow}>
+                    <WSAvatar name={a.employeeName} size={28} />
+                    <span className={s.attendName}>{a.employeeName}</span>
+                    <span
+                      className={`${s.attendBadge} ${
+                        a.status === "ABSENT" ? s.attendAbsent : s.attendPresent
+                      }`}
+                    >
+                      {/* checkInTime 있으면 출근 시간 표시, 없으면 결근 */}
+                      {formatTime(a.checkInTime) ?? "결근"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </WSCard>
 
           {/* ─ 최근 업무 — GET /api/tasks/my ─ */}
@@ -368,7 +365,6 @@ export default function DashboardPage() {
                       <div className={s.approvalBody} style={{ marginTop: 0 }}>
                         <p className={s.approvalTitle}>{task.title}</p>
                         <p className={s.approvalMeta}>
-                          {/* 업무 상태 뱃지 — CSS 클래스 없어 inline style 사용 */}
                           <span
                             style={{
                               background: statusColor.bg,
