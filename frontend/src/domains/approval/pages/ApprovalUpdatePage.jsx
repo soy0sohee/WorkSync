@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   getMyInfo,
   getApprovalById,
+  getEmployees,
   updateApproval,
 } from "../services/approvalApi";
 import useAuthContext from "../../../store/AuthContext";
@@ -42,6 +43,7 @@ export default function ApprovalUpdate() {
   const [selectedForm, setSelectedForm] = useState(null);
   const [formValues, setFormValues] = useState({});
   const [myInfo, setMyInfo] = useState(null);
+  const [employees, setEmployees] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [attachments, setAttachments] = useState([]);
@@ -56,6 +58,9 @@ export default function ApprovalUpdate() {
       if (!data) return;
       setMyInfo(data);
     });
+    getEmployees(accessToken).then((data) => {
+      setEmployees(data ?? []);
+    });
   }, [accessToken]);
 
   // 기존 데이터 불러와서 폼에 채우기
@@ -63,7 +68,6 @@ export default function ApprovalUpdate() {
     if (!accessToken || !id) return;
     getApprovalById(accessToken, id).then((data) => {
       if (!data) return;
-      console.log("data.items:", data.items);
       setTitle(data.title);
       setSelectedForm({
         id: data.formId,
@@ -165,6 +169,7 @@ export default function ApprovalUpdate() {
             selectedForm={selectedForm}
             formValues={formValues}
             setFormValues={setFormValues}
+            employees={employees ?? []}
             myInfo={myInfo}
             title={title}
             setTitle={setTitle}

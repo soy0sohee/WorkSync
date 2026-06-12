@@ -25,8 +25,8 @@ const STATUS_CONFIG = {
 };
 
 const BOX_OPTIONS = [
-  { key: "my", label: "기안함" },
   { key: "inbox", label: "결재함" },
+  { key: "my", label: "기안함" },
   { key: "reference", label: "참조함" },
 ];
 
@@ -43,18 +43,17 @@ export default function Approval() {
   const [openDropdown, setOpenDropdown] = useState(null);
   const navigate = useNavigate();
   const { accessToken } = useAuthContext();
-  const [boxType, setBoxType] = useState("my"); // 기안함 / 결재함 / 참조함
+  const [boxType, setBoxType] = useState("inbox"); // 기안함 / 결재함 / 참조함
   const [status, setStatus] = useState("all"); // 전체 / 대기 / 승인 / 반려
   const [docs, setDocs] = useState([]);
 
   // boxType of statusFilter 바뀔 때 마다 API 호출
   useEffect(() => {
     if (!accessToken) return;
-
-    if (boxType === "my") {
-      getMyApprovals(accessToken, status).then((data) => setDocs(data ?? []));
-    } else if (boxType === "inbox") {
+    if (boxType === "inbox") {
       getApprovalInbox(accessToken, status).then((data) => setDocs(data ?? []));
+    } else if (boxType === "my") {
+      getMyApprovals(accessToken, status).then((data) => setDocs(data ?? []));
     } else if (boxType === "reference") {
       getReferenceApprovals(accessToken).then((data) => setDocs(data ?? []));
     }

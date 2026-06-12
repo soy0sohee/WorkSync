@@ -59,12 +59,16 @@ function LeaveDetail({ items, approval }) {
   useEffect(() => {
     if (!approval?.drafterId) return;
     getLeaveBalance(accessToken, approval.drafterId).then((data) => {
+      console.log("balance:", data);
       // 작성자 id를 넘겨서 작성자 잔여일 반환
       setBalance(data);
     });
   }, [accessToken, approval?.drafterId]);
 
-  //휴가 종류 매핑
+  // 저장된 잔여일 우선 사용
+  const remainingDays = approval?.items?.remainingDays ?? balance;
+
+  // 휴가 종류 매핑
   const LEAVE_TYPE = {
     ANNUAL: "연차",
     HALF: "반차",
@@ -116,7 +120,13 @@ function LeaveDetail({ items, approval }) {
               <th>휴가 종류</th>
               <td>{LEAVE_TYPE[items.leaveType] ?? "-"}</td>
               <th>잔여일</th>
-              <td>{balance ? `${balance.remainingDays}일` : "0일"}</td>
+              <td>
+                {approval?.items?.remainingDays
+                  ? `${approval.items.remainingDays}일`
+                  : balance
+                    ? `${balance.remainingDays}일`
+                    : "0일"}
+              </td>
             </tr>
             <tr>
               <th>휴가 기간</th>
@@ -391,6 +401,7 @@ export default function ApprovalDetail() {
     if (!accessToken) return;
     getApprovalById(accessToken, id).then((data) => {
       if (!data) return;
+
       setApproval(data);
       setStatus(data.status);
       setApprovalLines(data.approvalLines ?? []);
@@ -412,13 +423,22 @@ export default function ApprovalDetail() {
       </div>
     );
   }
-
   // 결재자 확인
   const myLine = approvalLines.find((line) => line.approverId === me?.id);
   // 참조자 확인
   const isReference = myLine?.stepType === "REFERENCE";
+
+  // 내 stepOrder보다 앞선 단계가 모두 승인 단계인지 확인
+  const previousLinesApproved = approvalLines
+    .filter((line) => line.stepOrder < myLine?.stepOrder)
+    .every((line) => line.status === "APPROVED");
+
   // 결재 버튼 활성화 조건
-  const canProcess = myLine && myLine.status === "WAITING" && !isReference;
+  const canProcess =
+    myLine &&
+    myLine.status === "WAITING" &&
+    !isReference &&
+    previousLinesApproved;
 
   const handleApprove = async () => {
     const result = await processApproval(accessToken, id, "APPROVED");
@@ -433,6 +453,7 @@ export default function ApprovalDetail() {
       setApproval(data);
       setStatus(data.status);
       setApprovalLines(data.approvalLines ?? []);
+      console.log("approvalLines: ", approvalLines);
     });
   };
 

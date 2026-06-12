@@ -279,6 +279,7 @@ function LeaveForm({
   setTitle,
   validateRef,
   isEditMode,
+  leaveBalance,
 }) {
   // 특정 key의 값만 업데이트하는 함수
   // ex: update("reason", "개인 사유") -> formValues.reason = "개인 사유"
@@ -296,7 +297,6 @@ function LeaveForm({
 
   // 수정화면일 때 기존값으로 동기화
   useEffect(() => {
-    console.log("isEditMode:", isEditMode);
     if (isEditMode && formValues) {
       if (formValues.leaveType) setLeaveType(formValues.leaveType);
       if (formValues.startDate) setStartDate(formValues.startDate);
@@ -398,17 +398,31 @@ function LeaveForm({
               />
             </div>
           </div>
-          <div>
-            <label className={s.label}>
-              제목<span className={s.required}>*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="결재 문서 제목을 입력하세요"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className={s.input}
-            />
+          <div className={s.row2}>
+            <div>
+              <label className={s.label}>
+                제목<span className={s.required}>*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="결재 문서 제목을 입력하세요"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className={s.input}
+              />
+            </div>
+            <div>
+              <label className={s.label}>
+                잔여일<span className={s.required}></span>
+              </label>
+              <input
+                type="text"
+                value={leaveBalance?.remainingDays ?? 0}
+                일
+                onChange={(e) => setTitle(e.target.value)}
+                className={s.input}
+              />
+            </div>
           </div>
           <div className={s.row2}>
             {/* 휴가 종류 선택 */}
@@ -850,6 +864,12 @@ function BusinessTripForm({
     setFormValues((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 합계 계산 (amount를 숫자로 변환 후 합산)
+  const total = expenses.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+  useEffect(() => {
+    setFormValues((prev) => ({ ...prev, amount: total }));
+  }, [total]);
+
   // 출장자 행 추가/삭제/수정
   const addTraveler = () =>
     setRows((prev) => [
@@ -862,12 +882,6 @@ function BusinessTripForm({
     setRows((prev) =>
       prev.map((r) => (r.id === id ? { ...r, [key]: value } : r)),
     );
-
-  // 합계 계산 (amount를 숫자로 변환 후 합산)
-  const total = expenses.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-  useEffect(() => {
-    setFormValues((prev) => ({ ...prev, amount: total }));
-  }, [total]);
 
   // 출장비 행 추가/삭제/수정
   const addExpense = () =>
@@ -1194,6 +1208,7 @@ export default function ApprovalFormPanel({
   employees,
   validateRef,
   isEditMode,
+  leaveBalance,
 }) {
   if (!selectedForm) return null;
 
@@ -1224,6 +1239,7 @@ export default function ApprovalFormPanel({
           setTitle={setTitle}
           validateRef={validateRef}
           isEditMode={isEditMode}
+          leaveBalance={leaveBalance}
         />
       )}
       {formType === "PURCHASE" && myInfo && (

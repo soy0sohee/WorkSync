@@ -5,6 +5,7 @@ import {
   getForms,
   getEmployees,
   createApproval,
+  getLeaveBalance,
 } from "../services/approvalApi";
 import useAuthContext from "../../../store/AuthContext";
 import ApprovalFormPanel from "../components/ApprovalFormPanel";
@@ -86,13 +87,21 @@ export default function ApprovalNew() {
   const [employees, setEmployees] = useState([]);
   const [myInfo, setMyInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [balance, setBalance] = useState(null);
   const { accessToken } = useAuthContext();
   const validateRef = useRef(null);
 
   useEffect(() => {
     if (!accessToken) return;
 
-    getMyInfo(accessToken).then((data) => setMyInfo(data));
+    getMyInfo(accessToken).then((data) => {
+      setMyInfo(data);
+      if (data?.id) {
+        getLeaveBalance(accessToken, data.id).then((bal) => {
+          setBalance(bal);
+        });
+      }
+    });
     getForms(accessToken).then((data) => setTemplates(data ?? []));
     getEmployees(accessToken).then((data) => {
       setEmployees(data ?? []);
@@ -194,6 +203,11 @@ export default function ApprovalNew() {
     // LEAVE 양식인데 leaveType이 없으면 기본값 보장
     if (selectedForm?.formType === "LEAVE" && !stringifiedItems.leaveType) {
       stringifiedItems.leaveType = "ANNUAL";
+    }
+
+    // LEAVE 양식일 때 잔여일 추가
+    if (selectedForm?.formType === "LEAVE") {
+      stringifiedItems.remainingDays = String(balance?.remainingDays ?? "");
     }
 
     const body = {
@@ -308,6 +322,7 @@ export default function ApprovalNew() {
             employees={employees}
             validateRef={validateRef}
             isEditMode={false}
+            leaveBalance={balance}
           />
           <WSCard
             title="첨부 파일"
