@@ -142,11 +142,12 @@ CREATE INDEX idx_task_status   ON task(status);
 
 -- ── 10. chat_room (채팅방) ───────────────────────────────────
 CREATE TABLE chat_room (
-    id         BIGSERIAL       PRIMARY KEY,
-    room_type  room_type_enum  NOT NULL,
-    name       VARCHAR(100),
-    created_by BIGINT          NOT NULL REFERENCES employee(id),
-    created_at TIMESTAMP       NOT NULL DEFAULT NOW()
+    id              BIGSERIAL       PRIMARY KEY,
+    room_type       room_type_enum  NOT NULL,
+    name            VARCHAR(100),
+    created_by      BIGINT          NOT NULL REFERENCES employee(id),
+    last_message_at TIMESTAMP,
+    created_at      TIMESTAMP       NOT NULL DEFAULT NOW()
 );
 
 -- ── 11. chat_member (채팅 구성원) ────────────────────────────
@@ -155,6 +156,7 @@ CREATE TABLE chat_member (
     room_id              BIGINT    NOT NULL REFERENCES chat_room(id) ON DELETE CASCADE,
     employee_id          BIGINT    NOT NULL REFERENCES employee(id)  ON DELETE CASCADE,
     last_read_message_id BIGINT,
+    in_room              BOOLEAN   NOT NULL DEFAULT FALSE,
     joined_at            TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE (room_id, employee_id)
 );
