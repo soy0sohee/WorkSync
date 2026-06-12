@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Plus, MoreVertical, ChevronDown, Search } from "lucide-react";
 import { APPROVAL_DOCS } from "../../../constants/mockData";
 import {
@@ -39,12 +39,14 @@ const STATUS_OPTIONS = [
 
 export default function Approval() {
   const [search, setSearch] = useState("");
+  // 뒤로가기 버튼 눌렀을 때 이전 화면으로 돌아갈 수 있도록 URL 저장
+  const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [openDropdown, setOpenDropdown] = useState(null);
   const navigate = useNavigate();
   const { accessToken } = useAuthContext();
-  const [boxType, setBoxType] = useState("inbox"); // 기안함 / 결재함 / 참조함
-  const [status, setStatus] = useState("all"); // 전체 / 대기 / 승인 / 반려
+  const boxType = searchParams.get("box") ?? "inbox"; // 기본값
+  const status = searchParams.get("status") ?? "all";
   const [docs, setDocs] = useState([]);
 
   // boxType of statusFilter 바뀔 때 마다 API 호출
@@ -101,10 +103,9 @@ export default function Approval() {
                     <button
                       key={item.key}
                       onClick={() => {
-                        setBoxType(item.key);
-                        setStatus("all");
-                        setOpenDropdown(null);
+                        setSearchParams({ box: item.key, status: "all" });
                         setPage(1);
+                        setOpenDropdown(null);
                       }}
                       className={s.ddItem}
                     >
@@ -132,7 +133,7 @@ export default function Approval() {
                       <button
                         key={item.key}
                         onClick={() => {
-                          setStatus(item.key);
+                          setSearchParams({ box: boxType, status: item.key });
                           setPage(1);
                           setOpenDropdown(null);
                         }}
