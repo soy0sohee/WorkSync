@@ -156,6 +156,7 @@ CREATE TABLE chat_member (
     room_id              BIGINT    NOT NULL REFERENCES chat_room(id) ON DELETE CASCADE,
     employee_id          BIGINT    NOT NULL REFERENCES employee(id)  ON DELETE CASCADE,
     last_read_message_id BIGINT,
+    in_room              BOOLEAN   NOT NULL DEFAULT FALSE,
     joined_at            TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE (room_id, employee_id)
 );
