@@ -2,6 +2,7 @@ package com.worksync.global.exception;
 
 import com.worksync.global.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -39,6 +40,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(ApiResponse.fail(400, e.getMessage()));
+    }
+
+    // 동시 요청으로 인한 낙관적 락(@Version) 충돌 — 연차 잔여일 등 동시 수정 시 발생
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLockingFailureException(OptimisticLockingFailureException e) {
+        log.warn("Optimistic locking conflict", e);
+        return ResponseEntity.status(409)
+                .body(ApiResponse.fail(409, "다른 요청과 처리가 겹쳤습니다. 잠시 후 다시 시도해주세요."));
     }
 
     @ExceptionHandler(Exception.class)
