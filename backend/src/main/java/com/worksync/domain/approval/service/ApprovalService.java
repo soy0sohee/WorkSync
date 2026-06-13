@@ -12,6 +12,7 @@ import com.worksync.domain.employee.entity.Employee;
 import com.worksync.domain.employee.repository.EmployeeRepository;
 import com.worksync.domain.leave.entity.AnnualLeaveBalance;
 import com.worksync.domain.leave.entity.LeaveRequest;
+import com.worksync.domain.leave.entity.LeaveStatus;
 import com.worksync.domain.leave.entity.LeaveType;
 import com.worksync.domain.leave.repository.AnnualLeaveBalanceRepository;
 import com.worksync.domain.leave.repository.LeaveRequestRepository;
@@ -117,6 +118,14 @@ public class ApprovalService {
                 throw new CustomException(ErrorCode.INVALID_LEAVE_TYPE);
             }
 
+            // 유효하지 않은 휴가 유형이면 INVALID_LEAVE_TYPE으로 처리 (raw IllegalArgumentException 노출 방지)
+            LeaveType leaveType;
+            try {
+                leaveType = LeaveType.valueOf(leaveTypeStr);
+            } catch (IllegalArgumentException e) {
+                throw new CustomException(ErrorCode.INVALID_LEAVE_TYPE);
+            }
+
             boolean isHalf = "HALF".equals(leaveTypeStr);
 
             // 날짜 파싱
@@ -151,7 +160,7 @@ public class ApprovalService {
             LeaveRequest leaveRequest = LeaveRequest.builder()
                     .employee(drafter)
                     .approvalDoc(doc)
-                    .leaveType(LeaveType.valueOf(leaveTypeStr))
+                    .leaveType(leaveType)
                     .startDate(startDate)
                     .endDate(endDate)
                     .daysCount(daysCount)
@@ -340,6 +349,21 @@ public class ApprovalService {
                 .anyMatch(l -> l.getStatus() == ApprovalLineStatus.APPROVED);
         if (alreadyStarted) {
             throw new CustomException(ErrorCode.APPROVAL_EDIT_FORBIDDEN);
+        }
+
+        // LEAVE 타입 문서 삭제 시 — 차감 대기 중이던 연차(pendingDays)를 복구하고 LeaveRequest를 정리
+        if ("LEAVE".equals(doc.getForm().getFormType())) {
+            leaveRequestRepository.findByApprovalDocId(doc.getId())
+                    .filter(leaveRequest -> leaveRequest.getStatus() == LeaveStatus.PENDING)
+                    .ifPresent(leaveRequest -> {
+                        short leaveYear = (short) leaveRequest.getStartDate().getYear();
+                        AnnualLeaveBalance balance = annualLeaveBalanceRepository
+                                .findByEmployeeIdAndYear(leaveRequest.getEmployee().getId(), leaveYear)
+                                .orElseThrow(() -> new CustomException(ErrorCode.LEAVE_BALANCE_NOT_FOUND));
+                        balance.subtractPendingDays(leaveRequest.getDaysCount());
+                        annualLeaveBalanceRepository.save(balance);
+                        leaveRequestRepository.delete(leaveRequest);
+                    });
         }
 
         approvalDocRepository.delete(doc);
