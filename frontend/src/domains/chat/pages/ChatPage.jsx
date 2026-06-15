@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import { log } from "sockjs-client/dist/sockjs";
 import useAuthContext from "../../../store/AuthContext";
 import {
   Search,
@@ -10,8 +11,11 @@ import {
   Plus,
   Users,
   CheckCheck,
+  X,
+  Download,
 } from "lucide-react";
 import { WSAvatar } from "../../../components/common/CommonWidgets";
+import { WSEmptyState } from "../../../components/common/LayoutComponents";
 import {
   getChatRoom,
   getMember,
@@ -22,6 +26,7 @@ import {
   leaveRoom,
 } from "../services/chatApi";
 import { getMyInfo } from "../../../components/service/TopBarApi";
+import { putNotifications } from "../../notification/services/notificationApi";
 import {
   statusColor,
   JOB_GRADE,
@@ -31,9 +36,11 @@ import {
 } from "../components/chatUtil";
 import { ConvItem } from "../components/ConvItem";
 import { NewConvModal } from "../components/NewConvModal";
+import useFileUpload from "../../../hooks/useFileUpload";
+import { uploadFile, saveFile, getFile } from "../../file/services/fileApi";
+import { getSize, getFileMeta } from "../../file/components/fileUtil";
+import { FileBubble } from "../components/FileBubble";
 import s from "./ChatPage.module.css";
-import { putNotifications } from "../../notification/services/notificationApi";
-import { log } from "sockjs-client/dist/sockjs";
 
 export default function Messenger() {
   const { accessToken, myStatus } = useAuthContext();
@@ -101,6 +108,7 @@ export default function Messenger() {
                 content: msg.content,
                 time: msg.sentAt,
                 type: msg.msgType,
+                fileId: msg.fileId,
               },
             ];
           });
@@ -110,9 +118,38 @@ export default function Messenger() {
 
     client.activate();
     return () => client.deactivate();
-  }, [activeConvId, my]);
+  }, [activeConvId, my.id]);
 
   // 실시간 대화 안읽음 뱃지
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const client = new Client({
+      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      reconnectDelay: 5000,
+      connectHeaders: { Authorization: `Bearer ${accessToken}` },
+
+      // debug: (str) => {
+      //   console.log("STOMP:", str);
+      // },
+
+      onConnect: () => {
+        client.subscribe(`/user/queue/chat/unread`, (frame) => {
+          const { roomId, unreadCount } = JSON.parse(frame.body);
+          setConversation((prev) =>
+            prev.map((conv) =>
+              conv.id === roomId ? { ...conv, unreadCount: unreadCount } : conv,
+            ),
+          );
+        });
+      },
+    });
+
+    client.activate();
+    return () => client.deactivate();
+  }, [accessToken]);
+
+  // 실시간 공유 파일
   useEffect(() => {
     if (!accessToken) return;
 
@@ -128,20 +165,25 @@ export default function Messenger() {
       onConnect: () => {
         console.log("연결");
 
-        client.subscribe(`/user/queue/chat/unread`, (frame) => {
-          const { roomId, unreadCount } = JSON.parse(frame.body);
-          setConversation((prev) =>
-            prev.map((conv) =>
-              conv.id === roomId ? { ...conv, unreadCount: unreadCount } : conv,
-            ),
-          );
+        client.subscribe(`/topic/chat/${activeConvId}/files`, (frame) => {
+          const file = JSON.parse(frame.body);
+          setSharedFiles((prev) => [
+            {
+              id: file.id,
+              originalName: file.originalName,
+              fileSize: getSize(file.fileSize),
+              filePath: file.filePath,
+              createdAt: file.createdAt,
+            },
+            ...prev,
+          ]);
         });
       },
     });
 
     client.activate();
     return () => client.deactivate();
-  }, [accessToken]);
+  }, [accessToken, activeConvId]);
 
   // 새 메신저 아래로 스트롤 이동
   useEffect(() => {
@@ -214,6 +256,7 @@ export default function Messenger() {
           content: msg.content,
           time: msg.sentAt,
           type: msg.msgType,
+          fileId: msg.fileId,
         })),
       );
     });
@@ -226,11 +269,11 @@ export default function Messenger() {
         ),
       );
     });
-  }, [accessToken, activeConvId, my]);
+  }, [accessToken, activeConvId, my.id]);
 
-  // 채팅방 입/퇴장 처리
   useEffect(() => {
     if (!accessToken || !activeConvId) return;
+    // 채팅방 입/퇴장 처리
     enterRoom(accessToken, activeConvId);
     return () => {
       leaveRoom(accessToken, activeConvId);
@@ -244,68 +287,115 @@ export default function Messenger() {
 
     if (!accessToken) return;
     putNotifications(accessToken, {
-      targetType: "CHAT_ROOM",
+      targetType: "CHAT",
       targetId: conv.id,
     });
   }
 
+  // 파일 선언
+  const {
+    files,
+    isDragging,
+    setIsDragging,
+    uploadedFile,
+    uploadedFileRef,
+    addFiles,
+    removeFiles,
+    clearFiles,
+  } = useFileUpload(accessToken, "CHAT");
+
   // 기존 MESSAGES 더미 + 이후 전송한 텍스트/파일 메시지 통합 관리
   // sharedFiles : 오른쪽 패널에 보여줄 파일 목록
-  // const [sharedFiles, setSharedFiles] = useState([]);
+  const [sharedFiles, setSharedFiles] = useState([]);
 
   // 숨겨진 <input type="file">을 클립 버튼과 연결하기 위한 ref
-  // const fileInputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
-  // 파일 선택 시 실행 - 채팅 말풍선 + 오른쪽 목록 동시 업데이트
-  // function handleFileSelect(e) {
-  //   const files = Array.from(e.target.files); // FileList -> 배열로 변환
-  //   if (files.length === 0) return; // 선택 취소 시 아무것도 안함
-  //   const now = formatTime(new Date().toISOString());
+  // 기존 파일 목록 불러오기
+  useEffect(() => {
+    if (!accessToken || !activeConvId) return;
 
-  //   files.forEach((file) => {
-  //     // 파일 정보 객체 생성
-  //     const fileEntry = {
-  //       id: Date.now() + Math.random(), // 고유 key용 임시 id
-  //       name: file.name,
-  //       size: formatSize(file.size), // "1.2MB 형식으로 변환"
-  //       ext: getExt(file.name),
-  //       uploadAt: now,
-  //       raw: file, //다운로드를 위해 원본 File 객체
-  //     };
+    getFile(accessToken, "CHAT", activeConvId).then((data) => {
+      const list = Array.isArray(data.data) ? data.data : [];
 
-  //     // 1) 채팅창에 파일 말풍선 메시지 추가
-  //     setChatMessages((prev) => [
-  //       ...prev,
-  //       {
-  //         id: Date.now(),
-  //         isMine: my.id,
-  //         sender: { name: my.name, avatar: my.profileImage },
-  //         content: "",
-  //         time: now,
-  //         type: "file", // "text"가 아닌 "file"로 구분
-  //         file: fileEntry,
-  //       },
-  //     ]);
+      setSharedFiles(
+        list.reverse().map((file) => {
+          return {
+            id: file.id,
+            originalName: file.originalName,
+            fileSize: getSize(file.fileSize),
+            filePath: file.filePath,
+            createdAt: file.createdAt,
+          };
+        }),
+      );
+    });
+  }, [accessToken, activeConvId]);
 
-  //     // 2) 오른쪽 패널 파일 목록 맨 위에 추가 (최신 파일이 위로)
-  //     setSharedFiles((prev) => [fileEntry, ...prev]);
-  //   });
-
-  //   // input 초기화 - 같은 파일을 연속으로 선택할 수 있게
-  //   e.target.value = "";
-  // }
+  // 파일 선택 시 스토리지 업로드
+  function handleFileSelect(files) {
+    if (!files || files.length === 0) return;
+    addFiles(files);
+  }
 
   // 텍스트 메시지 전송 - POST 후 GET으로 메시지 목록 갱신
   async function handleSend() {
-    if (!message.trim()) return;
     const content = message.trim();
+    if (!content && files.length === 0) return;
     setMessage("");
 
     try {
       // 전송만 하면 WebSocket 구독(/topic/room)으로 본인 포함 실시간 반영됨
-      await sendMessage(accessToken, activeConvId, content);
+      if (content) {
+        await sendMessage(accessToken, activeConvId, content, "TEXT");
+      }
+
+      // DB에 파일 저장
+      for (const uploaded of uploadedFileRef.current) {
+        if (!uploaded?.filePath) continue;
+
+        const saved = await saveFile(accessToken, {
+          ...uploaded,
+          refType: "CHAT",
+          refId: activeConvId,
+        });
+        const fileId = saved?.data?.id;
+
+        if (!fileId) {
+          console.log("fileId 없음" + saved.data);
+          continue;
+        }
+
+        await sendMessage(
+          accessToken,
+          activeConvId,
+          uploaded.originalName,
+          "FILE",
+          fileId,
+        );
+      }
+
+      // 파일 초기화
+      clearFiles();
     } catch (error) {
       console.log("메시지 전송 에러: " + error);
+    }
+  }
+
+  // 브라우저에서 직접 다운로드 - 백엔드 없이도 동작
+  function handleDownload(file) {
+    if (file.filePath) {
+      // DB에서 불러온 파일 다운로드 (supabase URL)
+      fetch(file.filePath)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = file.originalName;
+          a.click();
+          URL.revokeObjectURL(url);
+        });
     }
   }
 
@@ -408,6 +498,7 @@ export default function Messenger() {
         <div className={s.messages}>
           {chatMessages.map((msg, index) => {
             // 이전 메시지와 날짜가 다를때만 날짜 표시
+
             const prevMsg = chatMessages[index - 1];
             const showDate =
               !prevMsg || formatDay(msg.time) !== formatDay(prevMsg.time);
@@ -441,8 +532,11 @@ export default function Messenger() {
                       <span className={s.msgSender}>{msg.sender.name}</span>
                     )}
                     {/* 파일이면 FileBubble, 텍스트면 기존 말풍선 */}
-                    {msg.type === "file" ? (
-                      <FileBubble file={msg.file} />
+                    {msg.type === "FILE" || msg.type === "file" ? (
+                      <FileBubble
+                        file={sharedFiles.find((f) => f.id === msg.fileId)}
+                        onDownload={handleDownload}
+                      />
                     ) : (
                       <div
                         className={`${s.bubble} ${msg.isMine ? s.bubbleMine : ""}`}
@@ -467,14 +561,34 @@ export default function Messenger() {
         </div>
 
         <div className={s.inputBar}>
-          {/* <input
+          <input
             ref={fileInputRef}
             type="file"
-            multiple
             style={{ display: "none" }}
             // 숨겨둔 상태
-            onChange={handleFileSelect}
-          /> */}
+            onChange={(e) => handleFileSelect(Array.from(e.target.files))}
+          />
+          {files.length > 0 && (
+            // 파일 미리보기
+            <div className={s.pendingFiles}>
+              {files.map((file, index) => (
+                <div key={index} className={`${s.pendingItem} ${s.inputRow}`}>
+                  <div className={s.pendingText}>
+                    <span>{file.file.name}</span>
+                    <span>{getSize(file.file.size)}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      removeFiles(index);
+                    }}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className={s.inputRow}>
             <button
               className={s.inputBtn}
@@ -486,7 +600,7 @@ export default function Messenger() {
             </button>
             <input
               type="text"
-              placeholder="메시지 입력... (Enter로 전송)"
+              placeholder="메시지를 입력하세요. (Enter로 전송)"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={(e) => {
@@ -555,27 +669,32 @@ export default function Messenger() {
             <h3 className={s.infoTitle}>공유 파일</h3>
             {/* 파일 개수 동적으로 표시 */}
 
-            {/* <div className={s.fileList}>
+            <div className={s.fileList}>
               {sharedFiles.length === 0 ? (
                 <WSEmptyState
                   title="아직 업로드된 파일이 없습니다."
                   icon={<Paperclip />}
                 />
               ) : (
-                sharedFiles.map((file) => {
-                  const meta = getFileMeta(file.name);
-                  return (
-                    <>
-                      <p className={s.infoSub}>
-                        `${sharedFiles.length}개 파일 업로드됨`
-                      </p>
+                <>
+                  {sharedFiles.length > 0 && (
+                    <p className={s.infoSub}>
+                      {sharedFiles.length}개 파일 업로드됨
+                    </p>
+                  )}
+                  {sharedFiles.map((file, idx) => {
+                    const meta = getFileMeta(file.originalName);
+                    return (
                       <div
-                        key={file.id}
+                        key={idx}
                         className={s.fileRow}
-                        onClick={() => handleDownload(file)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(file);
+                        }}
                         style={{ cursor: "pointer" }}
                         role="button"
-                        aria-label={`${file.name} 다운로드`}
+                        aria-label={`${file.originalName} 다운로드`}
                       >
                         <div className={s.fileLeft}>
                           <div
@@ -584,19 +703,28 @@ export default function Messenger() {
                           >
                             {meta.label}
                           </div>
-                          <div>
-                            <p className={s.fileName}>{file.name}</p>
+                          <div className={s.fileText}>
+                            <p className={s.fileName}>{file.originalName}</p>
                             <p className={s.fileSize}>
-                              {file.size} · {file.uploadedAt}
+                              {file.fileSize} · {formatTime(file.createdAt)}
                             </p>
                           </div>
                         </div>
+                        <button
+                          className={s.attachDl}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(file);
+                          }}
+                        >
+                          <Download size={18} />
+                        </button>
                       </div>
-                    </>
-                  );
-                })
+                    );
+                  })}
+                </>
               )}
-            </div> */}
+            </div>
           </div>
         </div> // info
       )}
