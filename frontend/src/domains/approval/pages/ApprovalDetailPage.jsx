@@ -1,5 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
 import useAuthContext from "../../../store/AuthContext";
+import { APPROVAL_DOCS, TEAM_MEMBERS } from "../../../constants/mockData";
+import { WSAvatar } from "../../../components/common/CommonWidgets";
+import s from "./ApprovalDetailPage.module.css";
+import { useState, useEffect, Fragment } from "react";
 import {
   CheckCircle,
   XCircle,
@@ -8,16 +12,12 @@ import {
   X,
   Clock,
 } from "lucide-react";
-import { APPROVAL_DOCS, TEAM_MEMBERS } from "../../../constants/mockData";
-import { WSAvatar } from "../../../components/common/CommonWidgets";
 import {
   getMyInfo,
   getApprovalById,
   processApproval,
   getLeaveBalance,
 } from "../services/approvalApi";
-import s from "./ApprovalDetailPage.module.css";
-import { useState, useEffect, Fragment } from "react";
 
 const STATUS_CONFIG = {
   IN_PROGRESS: { label: "대기", bg: "#FEF3C7", text: "#92400E" },
@@ -57,12 +57,21 @@ function LeaveDetail({ items, approval }) {
   const [balance, setBalance] = useState(null);
 
   useEffect(() => {
-    getLeaveBalance(accessToken).then((data) => {
-      setBalance(data);
-    }, []);
-  });
+    console.log("items:", JSON.stringify(items));
+  }, [items]);
 
-  //휴가 종류 매핑
+  useEffect(() => {
+    if (!approval?.drafterId) return;
+    getLeaveBalance(accessToken, approval.drafterId).then((data) => {
+      // 작성자 id를 넘겨서 작성자 잔여일 반환
+      setBalance(data);
+    });
+  }, [accessToken, approval?.drafterId]);
+
+  // 저장된 잔여일 우선 사용
+  const remainingDays = approval?.items?.remainingDays ?? balance;
+
+  // 휴가 종류 매핑
   const LEAVE_TYPE = {
     ANNUAL: "연차",
     HALF: "반차",
@@ -114,7 +123,18 @@ function LeaveDetail({ items, approval }) {
               <th>휴가 종류</th>
               <td>{LEAVE_TYPE[items.leaveType] ?? "-"}</td>
               <th>잔여일</th>
-              <td>{balance ? `${balance.remainingDays}일` : "0일"}</td>
+              <td>
+                {approval?.status === "REJECTED" ||
+                approval?.status === "APPROVED"
+                  ? balance
+                    ? `${balance.remainingDays}일`
+                    : "0일"
+                  : approval?.items?.remainingDays
+                    ? `${approval.items.remainingDays}일`
+                    : balance
+                      ? `${balance.remainingDays}일`
+                      : "0일"}
+              </td>
             </tr>
             <tr>
               <th>휴가 기간</th>
@@ -332,7 +352,9 @@ function BusinessTripDetail({ items }) {
             <tbody>
               <tr>
                 <th>출장지</th>
-                <td>{items.destination ?? "-"}</td>
+                <td style={{ whiteSpace: "pre-wrap" }}>
+                  {items.destination ?? "-"}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -387,6 +409,7 @@ export default function ApprovalDetail() {
     if (!accessToken) return;
     getApprovalById(accessToken, id).then((data) => {
       if (!data) return;
+
       setApproval(data);
       setStatus(data.status);
       setApprovalLines(data.approvalLines ?? []);
@@ -398,7 +421,6 @@ export default function ApprovalDetail() {
     getMyInfo(accessToken).then((data) => {
       if (!data) return;
       setMe(data);
-      console.log("me.id : ", me?.id);
     });
   }, [accessToken]);
 
@@ -409,13 +431,22 @@ export default function ApprovalDetail() {
       </div>
     );
   }
-
   // 결재자 확인
   const myLine = approvalLines.find((line) => line.approverId === me?.id);
   // 참조자 확인
   const isReference = myLine?.stepType === "REFERENCE";
+
+  // 내 stepOrder보다 앞선 단계가 모두 승인 단계인지 확인
+  const previousLinesApproved = approvalLines
+    .filter((line) => line.stepOrder < myLine?.stepOrder)
+    .every((line) => line.status === "APPROVED");
+
   // 결재 버튼 활성화 조건
-  const canProcess = myLine && myLine.status === "WAITING" && !isReference;
+  const canProcess =
+    myLine &&
+    myLine.status === "WAITING" &&
+    !isReference &&
+    previousLinesApproved;
 
   const handleApprove = async () => {
     const result = await processApproval(accessToken, id, "APPROVED");
@@ -430,6 +461,7 @@ export default function ApprovalDetail() {
       setApproval(data);
       setStatus(data.status);
       setApprovalLines(data.approvalLines ?? []);
+      console.log("approvalLines: ", approvalLines);
     });
   };
 
@@ -481,7 +513,7 @@ export default function ApprovalDetail() {
               </div>
             </div>
           </div>
-          <button onClick={() => navigate("/approval")} className={s.closeBtn}>
+          <button onClick={() => navigate(-1)} className={s.closeBtn}>
             <X size={20} />
           </button>
         </div>

@@ -1,12 +1,9 @@
-import { useState, useRef, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import {
-  getMyInfo,
-  getApprovalById,
-  updateApproval,
-} from "../services/approvalApi";
 import useAuthContext from "../../../store/AuthContext";
 import ApprovalFormPanel from "../components/ApprovalFormPanel";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { WSCard } from "../../../components/common/CommonWidgets";
+import s from "./ApprovalCreatePage.module.css";
 import {
   ArrowLeft,
   Paperclip,
@@ -15,8 +12,12 @@ import {
   CheckCircle,
   Send,
 } from "lucide-react";
-import { WSCard } from "../../../components/common/CommonWidgets";
-import s from "./ApprovalCreatePage.module.css";
+import {
+  getMyInfo,
+  getApprovalById,
+  getEmployees,
+  updateApproval,
+} from "../services/approvalApi";
 
 const fileIconColor = {
   pdf: "#EF4444",
@@ -37,16 +38,17 @@ export default function ApprovalUpdate() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { accessToken } = useAuthContext();
-
   const [title, setTitle] = useState("");
   const [selectedForm, setSelectedForm] = useState(null);
   const [formValues, setFormValues] = useState({});
   const [myInfo, setMyInfo] = useState(null);
+  const [employees, setEmployees] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
+  const validateRef = useRef(null);
 
   // 내 정보 불러오기
   useEffect(() => {
@@ -54,6 +56,9 @@ export default function ApprovalUpdate() {
     getMyInfo(accessToken).then((data) => {
       if (!data) return;
       setMyInfo(data);
+    });
+    getEmployees(accessToken).then((data) => {
+      setEmployees(data ?? []);
     });
   }, [accessToken]);
 
@@ -163,9 +168,12 @@ export default function ApprovalUpdate() {
             selectedForm={selectedForm}
             formValues={formValues}
             setFormValues={setFormValues}
+            employees={employees ?? []}
             myInfo={myInfo}
             title={title}
             setTitle={setTitle}
+            validateRef={validateRef}
+            isEditMode={true}
           />
         </div>
 
