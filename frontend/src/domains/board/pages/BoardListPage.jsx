@@ -1,6 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import useAuthContext from "../../../store/AuthContext";
-import { getBoards, getMyInfo, getPosts, getDepartmentBoard, getDepartments } from "../services/boardApi";
+import {
+  getBoards,
+  getMyInfo,
+  getPosts,
+  getDepartmentBoard,
+  getDepartments,
+} from "../services/boardApi";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, ChevronDown } from "lucide-react";
 import {
@@ -119,8 +125,13 @@ export default function Board() {
         const ids = deptBoardId ? [...nonDeptIds, deptBoardId] : nonDeptIds;
         Promise.all(ids.map((id) => getPosts(id, accessToken))).then(
           (results) => {
-            setPosts(results.flat().filter(Boolean));
-          }
+            // 전체 조회 최신순 정렬
+            const flat = results.flat().filter(Boolean);
+            const sorted = flat.sort(
+              (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+            );
+            setPosts(sorted);
+          },
         );
       });
     } else if (category === "DEPARTMENT") {
@@ -130,12 +141,20 @@ export default function Board() {
       const departmentId =
         role === "ADMIN" && deptFilter !== "all" ? deptFilter : undefined;
       getPosts(deptBoardId, accessToken, departmentId).then((data) => {
-        setPosts(data ?? []);
+        // 부서 게시판 최신순 정렬
+        const sorted = (data ?? []).sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+        );
+        setPosts(sorted);
       });
     } else {
       getPosts(category, accessToken).then((data) => {
+        // 자유 게시판 최신순 정렬
         if (!data) return;
-        setPosts(data);
+        const sorted = data.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+        );
+        setPosts(sorted);
       });
     }
   }, [category, accessToken, deptBoardId, role, deptFilter]);
@@ -149,9 +168,11 @@ export default function Board() {
             onChange={(e) => {
               const raw = e.target.value;
               const val =
-                raw === "all" ? "all"
-                : raw === "DEPARTMENT" ? "DEPARTMENT"
-                : Number(raw);
+                raw === "all"
+                  ? "all"
+                  : raw === "DEPARTMENT"
+                    ? "DEPARTMENT"
+                    : Number(raw);
               setCategory(val);
               setPage(1);
             }}
