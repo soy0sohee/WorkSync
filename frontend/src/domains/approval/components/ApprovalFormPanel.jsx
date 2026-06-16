@@ -445,7 +445,7 @@ function LeaveForm({
                 <option value="ANNUAL">연차</option>
                 <option value="HALF">반차</option>
                 <option value="SICK">병가</option>
-                <option value="OTHER">휴가</option>
+                <option value="FAMILY">휴가</option>
               </select>
             </div>
             <div className={s.row2}>
