@@ -6,35 +6,31 @@ import {
   WSAvatar,
   WSButton,
 } from "../../../components/common/CommonWidgets";
+import { WSFileList } from "../../../components/common/FormComponents";
 import s from "./BoardDetailPage.module.css";
 import {
   getPostById,
   deletePost,
   getMyInfo,
   getPosts,
-  getEmployee,
 } from "../services/boardApi";
-import { WSFileList } from "../../../components/common/FormComponents";
 import useAuthContext from "../../../store/AuthContext";
 import useFileUpload from "../../../hooks/useFileUpload";
 import { getFile, saveFile, deleteFile } from "../../file/services/fileApi";
+
+const MOCK_ATTACHMENTS = [
+  { id: "a1", name: "03_제내_수정.xlsx", size: "1.2 MB", type: "XLSX" },
+];
 
 export default function BoardDetail() {
   const { accessToken } = useAuthContext();
   const { boardId, postId } = useParams();
   const [allPosts, setAllPosts] = useState([]);
-  const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [me, setMe] = useState(null);
-  const [profile, setProfile] = useState([]); // 상세 프로필이미지
-
-  // 현재 글의 위치 찾기
-  const postIndex = allPosts.findIndex((p) => p.id === Number(postId));
-  // 이전글
-  const prevPost = postIndex > 0 ? allPosts[postIndex - 1] : null;
-  // 다음글
-  const nextPost =
-    postIndex < allPosts.length - 1 ? allPosts[postIndex + 1] : null;
+  const [attachments, setAttachments] = useState(MOCK_ATTACHMENTS);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   // 파일 선언
   const {
@@ -50,24 +46,25 @@ export default function BoardDetail() {
 
   useEffect(() => {
     if (!accessToken) return;
-    // 게시글 하나
-    getPostById(boardId, postId, accessToken).then((data) => {
-      setPost(data);
-    });
-    // 게시글 전체 목록
-    getPosts(boardId, accessToken).then((data) => {
-      setAllPosts(data);
-    });
-    // 내 정보
-    getMyInfo(accessToken).then((data) => {
-      setMe(data);
-    });
-    // 전 직원 프로필
-    getEmployee(accessToken).then((data) => {
-      setProfile(Array.isArray(data.data) ? data.data : []);
-    });
+    setIsLoading(true); // 로딩 시작
+    // api 모두 실행
+    Promise.all([
+      getPostById(boardId, postId, accessToken),
+      getPosts(boardId, accessToken),
+      getMyInfo(accessToken),
+    ])
+      .then(([postData, allPostsData, myData]) => {
+        setPost(postData);
+        setAllPosts(allPostsData);
+        setMe(myData);
+        setIsLoading(false); // api 호출 종료 후에 로딩 끝날 수 있도록
+      })
+      .catch((err) => {
+        console.error("데이터 불러오기 실패: ", err);
+        setIsLoading(false);
+      });
+
     // 파일 데이터 불러오기
-    if (!accessToken || !postId) return;
     getFile(accessToken, "POST", postId).then((data) => {
       const fileList = Array.isArray(data.data) ? data.data : [];
       // console.log(fileList);
@@ -84,6 +81,7 @@ export default function BoardDetail() {
       );
     });
   }, [boardId, postId, accessToken]);
+  console.log("post:", post);
 
   // 파일 다운로드
   const handleDownload = async (file, idx) => {
@@ -98,6 +96,18 @@ export default function BoardDetail() {
 
     URL.revokeObjectURL(url);
   };
+
+  // 현재 글의 위치 찾기
+  const postIndex = allPosts.findIndex((p) => p.id === Number(postId));
+  // 이전글
+  const prevPost = postIndex > 0 ? allPosts[postIndex - 1] : null;
+  // 다음글
+  const nextPost =
+    postIndex < allPosts.length - 1 ? allPosts[postIndex + 1] : null;
+
+  if (isLoading) {
+    return null;
+  }
 
   if (!post) {
     return (
@@ -129,14 +139,7 @@ export default function BoardDetail() {
           <div className={s.contentCard}>
             <h1 className={s.title}>{post.title}</h1>
             <div className={s.metaRow}>
-              <WSAvatar
-                src={
-                  profile.find((p) => p.id === post.authorId)?.profileImage ??
-                  null
-                }
-                name={post.authorName}
-                size={32}
-              />
+              <WSAvatar src={null} name={post.authorName} size={32} />
               <div>
                 <span className={s.metaName}>{post.authorName}</span>
                 <span className={s.metaDate}>
@@ -150,14 +153,10 @@ export default function BoardDetail() {
 
         <div className={s.colSide}>
           <WSCard title="첨부 파일" subtitle="1개 파일 업로드">
-            {files ? (
-              <WSFileList
-                files={files.map(({ file, url }) => ({ ...file, url }))} //화면에 파일 리스트 보여줌
-                onDownload={handleDownload}
-              />
-            ) : (
-              <></>
-            )}
+            <WSFileList
+              files={files.map(({ file }) => file)}
+              onDownload={handleDownload}
+            />
           </WSCard>
           {me && post && (me.id === post.authorId || me.role === "ADMIN") && (
             <>

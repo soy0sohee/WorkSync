@@ -12,9 +12,9 @@ import {
   WSCalendarpicker,
   WSFileList,
 } from "../../../components/common/FormComponents";
-import s from "./TaskCreatePage.module.css";
 import useFileUpload from "../../../hooks/useFileUpload";
-import { saveFile, deleteFile } from "../../file/services/fileApi";
+import { getFile, saveFile, deleteFile } from "../../file/services/fileApi";
+import s from "./TaskCreatePage.module.css";
 
 const STATUS_OPTIONS = [
   { key: "TODO", label: "대기중" },
@@ -45,6 +45,10 @@ export default function TaskNew() {
   const { accessToken } = useAuthContext();
   const [members, setMembers] = useState([]);
   const [role, setRole] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [myDepartmentId, setMyDepartmentId] = useState(null);
+  const [myId, setMyId] = useState(null);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -55,10 +59,6 @@ export default function TaskNew() {
     startDate: "",
     dueDate: "",
   });
-  const [submitted, setSubmitted] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [myDepartmentId, setMyDepartmentId] = useState(null);
-  const [myId, setMyId] = useState(null);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -77,9 +77,6 @@ export default function TaskNew() {
     });
   }, [accessToken]);
 
-  const isValid = form.title.trim().length > 0;
-  const isTitleTooLong = form.title.length > 30;
-
   // 파일 선언
   const {
     files,
@@ -91,8 +88,37 @@ export default function TaskNew() {
     clearFiles,
   } = useFileUpload(accessToken, "TASK");
 
+  const isValid = () => {
+    if (!form.assigneeId) {
+      alert("담당자를 선택하세요.");
+      return false;
+    }
+    if (!form.startDate) {
+      alert("프로젝트 시작일을 입력하세요.");
+      return false;
+    }
+    if (!form.dueDate) {
+      alert("프로젝트 종료일을 입력하세요.");
+      return false;
+    }
+    if (form.startDate > form.dueDate) {
+      alert("시작일이 종료일보다 늦을 수 없습니다.");
+      return false;
+    }
+    if (!form.title.trim()) {
+      alert("제목을 입력하세요.");
+      return false;
+    }
+    if (!form.description.trim()) {
+      alert("상세 설명을 입력하세요.");
+      return false;
+    }
+    return true;
+  };
+  const isTitleTooLong = form.title.length > 30;
+
   async function handleSubmit() {
-    if (!isValid) return;
+    if (!isValid()) return;
 
     const data = {
       title: form.title,
@@ -110,12 +136,14 @@ export default function TaskNew() {
       const taskId = Number(response.id);
 
       // 파일 저장
-      if (uploadedFile?.filePath) {
-        await saveFile(accessToken, {
-          ...uploadedFile,
-          refType: "TASK",
-          refId: taskId,
-        });
+      for (const file of uploadedFile) {
+        if (file?.filePath) {
+          await saveFile(accessToken, {
+            ...file,
+            refType: "TASK",
+            refId: taskId,
+          });
+        }
       }
 
       setSubmitted(true);
@@ -310,10 +338,7 @@ export default function TaskNew() {
               helperText="PDF, DOCX, XLSX, PPTX - 최대 50MB"
             />
 
-            <WSFileList
-              files={files.map(({ file }) => file)}
-              onRemove={removeFiles}
-            />
+            <WSFileList files={files} onRemove={removeFiles} />
           </WSCard>
 
           <div className={s.actionsCol}>

@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import useAuthContext from "../../../store/AuthContext";
 import { APPROVAL_DOCS, TEAM_MEMBERS } from "../../../constants/mockData";
 import { WSAvatar } from "../../../components/common/CommonWidgets";
-import s from "./ApprovalDetailPage.module.css";
+import { WSFileList } from "../../../components/common/FormComponents";
 import { useState, useEffect, Fragment } from "react";
 import {
   CheckCircle,
@@ -18,6 +18,9 @@ import {
   processApproval,
   getLeaveBalance,
 } from "../services/approvalApi";
+import useFileUpload from "../../../hooks/useFileUpload";
+import { getFile, saveFile, deleteFile } from "../../file/services/fileApi";
+import s from "./ApprovalDetailPage.module.css";
 
 const STATUS_CONFIG = {
   IN_PROGRESS: { label: "대기", bg: "#FEF3C7", text: "#92400E" },
@@ -57,10 +60,6 @@ function LeaveDetail({ items, approval }) {
   const [balance, setBalance] = useState(null);
 
   useEffect(() => {
-    console.log("items:", JSON.stringify(items));
-  }, [items]);
-
-  useEffect(() => {
     if (!approval?.drafterId) return;
     getLeaveBalance(accessToken, approval.drafterId).then((data) => {
       // 작성자 id를 넘겨서 작성자 잔여일 반환
@@ -78,12 +77,14 @@ function LeaveDetail({ items, approval }) {
     SICK: "병가",
     OTHER: "휴가",
   };
+
   // 날짜 표시 함수
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
     const [year, month, day] = dateStr.split("-");
     return `${year}.${month}.${day}`;
   };
+
   // 휴가 기간 표시 함수
   const leavePeriod = () => {
     if (items.halfDate) {
@@ -399,20 +400,52 @@ export default function ApprovalDetail() {
   const [approvalLines, setApprovalLines] = useState([]);
   const [approval, setApproval] = useState(null);
   const [me, setMe] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const fallbackStatusConfig = {
     label: "알 수 없음",
     bg: "#E5E7EB",
     text: "#374151",
   };
 
+  // 파일 선언
+  const {
+    files,
+    setFiles,
+    isDragging,
+    setIsDragging,
+    uploadedFile,
+    addFiles,
+    removeFiles,
+    clearFiles,
+  } = useFileUpload(accessToken, "APPROVAL", id);
+
   useEffect(() => {
     if (!accessToken) return;
+    setIsLoading(true);
     getApprovalById(accessToken, id).then((data) => {
       if (!data) return;
 
       setApproval(data);
       setStatus(data.status);
       setApprovalLines(data.approvalLines ?? []);
+      setIsLoading(false);
+    });
+
+    // 파일 데이터 불러오기
+    getFile(accessToken, "APPROVAL", id).then((data) => {
+      const fileList = Array.isArray(data.data) ? data.data : [];
+      // console.log(fileList);
+      setFiles(
+        fileList.map((f) => ({
+          file: {
+            name: f.originalName,
+            size: f.fileSize,
+          },
+          url: f.filePath,
+          refType: f.refType,
+          refId: f.refId,
+        })),
+      );
     });
   }, [accessToken, id]);
 
@@ -424,15 +457,13 @@ export default function ApprovalDetail() {
     });
   }, [accessToken]);
 
-  if (!approval) {
-    return (
-      <div className={s.notFound}>
-        <p>문서를 찾을 수 없습니다</p>
-      </div>
-    );
+  if (isLoading) {
+    return null;
   }
+
   // 결재자 확인
   const myLine = approvalLines.find((line) => line.approverId === me?.id);
+
   // 참조자 확인
   const isReference = myLine?.stepType === "REFERENCE";
 
@@ -461,7 +492,6 @@ export default function ApprovalDetail() {
       setApproval(data);
       setStatus(data.status);
       setApprovalLines(data.approvalLines ?? []);
-      console.log("approvalLines: ", approvalLines);
     });
   };
 
@@ -479,6 +509,20 @@ export default function ApprovalDetail() {
       setStatus(data.status);
       setApprovalLines(data.approvalLines ?? []);
     });
+  };
+
+  // 파일 다운로드
+  const handleDownload = async (file, idx) => {
+    const response = await fetch(file.url);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name;
+    a.click();
+
+    URL.revokeObjectURL(url);
   };
 
   const statusConfig = STATUS_CONFIG[approval.status] ?? fallbackStatusConfig;
@@ -607,18 +651,10 @@ export default function ApprovalDetail() {
       </div>
 
       <div className={s.section}>
-        <div className={s.attach}>
-          <div className={s.attachLeft}>
-            <div className={s.attachIcon}>XLSX</div>
-            <div>
-              <p className={s.attachName}>Q3_예산_요청.xlsx</p>
-              <p className={s.attachSize}>1.2 MB</p>
-            </div>
-          </div>
-          <button className={s.attachDl}>
-            <Download size={18} />
-          </button>
-        </div>
+        <WSFileList
+          files={files.map(({ file }) => file)}
+          onDownload={handleDownload}
+        />
       </div>
 
       {canProcess && (
