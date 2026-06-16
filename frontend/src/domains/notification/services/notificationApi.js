@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "/api";
 
 // 알림 목록 조회
 export async function getNotifications(accessToken) {

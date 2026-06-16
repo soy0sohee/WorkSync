@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "/api";
 
 // 게시판 목록 조회 (카테고리 드롭다운용)
 export async function getBoards(accessToken) {

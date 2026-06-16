@@ -78,7 +78,7 @@ export default function Messenger() {
   // 구성원 상태 실시간 구독 — 누군가 온라인/자리비움 변경 시 점 즉시 갱신
   useEffect(() => {
     const client = new Client({
-      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      webSocketFactory: () => new SockJS("/ws"),
       reconnectDelay: 5000,
       connectHeaders: { Authorization: `Bearer ${accessToken}` },
       onConnect: () => {
@@ -104,7 +104,7 @@ export default function Messenger() {
     if (!activeConvId) return;
 
     const client = new Client({
-      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      webSocketFactory: () => new SockJS("/ws"),
       reconnectDelay: 5000,
       connectHeaders: { Authorization: `Bearer ${accessToken}` },
 
@@ -144,7 +144,7 @@ export default function Messenger() {
     if (!accessToken) return;
 
     const client = new Client({
-      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      webSocketFactory: () => new SockJS("/ws"),
       reconnectDelay: 5000,
       connectHeaders: { Authorization: `Bearer ${accessToken}` },
 
@@ -169,7 +169,7 @@ export default function Messenger() {
     if (!accessToken) return;
 
     const client = new Client({
-      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      webSocketFactory: () => new SockJS("/ws"),
       reconnectDelay: 5000,
       connectHeaders: { Authorization: `Bearer ${accessToken}` },
 

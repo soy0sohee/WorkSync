@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "/api";
 
 // 전체 업무 목록 조회
 export async function getTaskList(accessToken, page = 0, size = 10, status) {

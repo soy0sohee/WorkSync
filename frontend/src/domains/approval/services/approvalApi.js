@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "/api";
 
 // 내 정보 조회
 export async function getMyInfo(accessToken) {

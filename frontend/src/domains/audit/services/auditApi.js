@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "/api";
 
 // 감사 로그 목록 조회 (카테고리 / 기간 / 키워드 / 페이지)
 // category: AUTH | HR | APPROVAL | TASK | null(전체)

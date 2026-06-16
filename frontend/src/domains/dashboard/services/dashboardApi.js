@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "/api";
 
 // 대시보드 통계 조회 (GET /api/dashboard)
 export async function getDashboard(accessToken) {
