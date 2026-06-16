@@ -56,6 +56,25 @@ export default function Messenger() {
   const [my, setMy] = useState([]);
   const bottomRef = useRef(null);
 
+  // 파일 선언
+  const {
+    files,
+    isDragging,
+    setIsDragging,
+    uploadedFile,
+    uploadedFileRef,
+    addFiles,
+    removeFiles,
+    clearFiles,
+  } = useFileUpload(accessToken, "CHAT");
+
+  // 기존 MESSAGES 더미 + 이후 전송한 텍스트/파일 메시지 통합 관리
+  // sharedFiles : 오른쪽 패널에 보여줄 파일 목록
+  const [sharedFiles, setSharedFiles] = useState([]);
+
+  // 숨겨진 <input type="file">을 클립 버튼과 연결하기 위한 ref
+  const fileInputRef = useRef(null);
+
   // 구성원 상태 실시간 구독 — 누군가 온라인/자리비움 변경 시 점 즉시 갱신
   useEffect(() => {
     const client = new Client({
@@ -188,7 +207,7 @@ export default function Messenger() {
   // 새 메신저 아래로 스트롤 이동
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+  }, [chatMessages, sharedFiles]);
 
   // 내 데이터 불러오기
   useEffect(() => {
@@ -291,25 +310,6 @@ export default function Messenger() {
       targetId: conv.id,
     });
   }
-
-  // 파일 선언
-  const {
-    files,
-    isDragging,
-    setIsDragging,
-    uploadedFile,
-    uploadedFileRef,
-    addFiles,
-    removeFiles,
-    clearFiles,
-  } = useFileUpload(accessToken, "CHAT");
-
-  // 기존 MESSAGES 더미 + 이후 전송한 텍스트/파일 메시지 통합 관리
-  // sharedFiles : 오른쪽 패널에 보여줄 파일 목록
-  const [sharedFiles, setSharedFiles] = useState([]);
-
-  // 숨겨진 <input type="file">을 클립 버튼과 연결하기 위한 ref
-  const fileInputRef = useRef(null);
 
   // 기존 파일 목록 불러오기
   useEffect(() => {
