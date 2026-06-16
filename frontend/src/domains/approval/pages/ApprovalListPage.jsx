@@ -75,7 +75,7 @@ export default function Approval() {
     setIsLoading(true); // 캐시 없을 때만 로딩 시작
 
     let api;
-    if (boxType === "inBox") api = getApprovalInbox(accessToken, status);
+    if (boxType === "inbox") api = getApprovalInbox(accessToken, status);
     else if (boxType === "my") api = getMyApprovals(accessToken, status);
     else api = getReferenceApprovals(accessToken, status);
 
