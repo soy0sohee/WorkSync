@@ -77,3 +77,21 @@ export async function deleteFile(accessToken, refType, refId) {
       console.log("에러발생: " + error);
     });
 }
+
+export async function getFileId(accessToken, fileId) {
+  return await fetch(`${BASE_URL}/files/${fileId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .then((json) => {
+      return json;
+    })
+    .catch((error) => {
+      console.log("에러발생: " + error);
+    });
+}

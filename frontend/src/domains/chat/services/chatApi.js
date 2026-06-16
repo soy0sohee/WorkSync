@@ -96,14 +96,20 @@ export async function getMessages(accessToken, roomId) {
     });
 }
 
-export async function sendMessage(accessToken, roomId, content) {
+export async function sendMessage(
+  accessToken,
+  roomId,
+  content,
+  msgType,
+  fileId = null,
+) {
   return await fetch(`${BASE_URL}/chat/rooms/${roomId}/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ content, msgType: "TEXT" }),
+    body: JSON.stringify({ content, fileId, msgType: msgType }),
   })
     .then((response) => response.json())
     .then((json) => json)
