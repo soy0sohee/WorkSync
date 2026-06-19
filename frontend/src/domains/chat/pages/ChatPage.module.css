@@ -1,6 +1,7 @@
 .root {
   display: flex;
   height: calc(100vh - 64px);
+  overflow: hidden;
 }
 
 /* Sidebar */
@@ -728,4 +729,37 @@
   background: #e5e7eb;
   color: #9ca3af;
   cursor: not-allowed;
+}
+
+@media (max-width: 1023px) {
+  .info {
+    display: none;
+  }
+  .sidebar {
+    width: 240px;
+  }
+}
+
+@media (max-width: 767px) {
+  .sidebar {
+    width: 100%;
+    position: absolute;
+    z-index: 10;
+    height: 100%;
+    transform: translateX(0);
+  }
+  .sidebarHidden {
+    transform: translateX(-100%);
+    display: none;
+  }
+  .chat {
+    width: 100%;
+  }
+  .msgBody {
+    max-width: 80vw;
+  }
+  .modal {
+    max-width: calc(100vw - 32px);
+    margin: 0 16px;
+  }
 }

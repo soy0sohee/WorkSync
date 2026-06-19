@@ -122,3 +122,41 @@
 .deptChevron {
   color: var(--ws-text-400);
 }
+
+@media (max-width: 767px) {
+  /* nameCell(3번째)을 flex 컬럼 최상단으로 */
+  .nameCell {
+    order: -2;
+    margin-bottom: 2px;
+  }
+  .name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ws-text-900);
+  }
+  /* 부서명을 이름 바로 아래 */
+  .dept {
+    order: -1;
+    font-size: 12px;
+    color: var(--ws-text-500);
+    margin: 0;
+  }
+  /* 직급 */
+  .rank {
+    font-size: 12px;
+    color: var(--ws-text-500);
+    margin: 0;
+  }
+  /* 연락처(5번째) */
+  .cell {
+    font-size: 12px;
+    color: var(--ws-text-400);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .table {
+    border-radius: 12px;
+  }
+}
