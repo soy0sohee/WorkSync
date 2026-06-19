@@ -124,39 +124,48 @@
 }
 
 @media (max-width: 767px) {
-  /* nameCell(3번째)을 flex 컬럼 최상단으로 */
+  /* 이름(3번째) → 최상단, 아바타+이름 가로 배치 */
   .nameCell {
     order: -2;
-    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 4px;
   }
   .name {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--ws-text-900);
   }
-  /* 부서명을 이름 바로 아래 */
+  /* 부서명 → 이름 바로 아래 */
   .dept {
     order: -1;
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--ws-text-500);
     margin: 0;
+    padding-left: 4px;
   }
   /* 직급 */
   .rank {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--ws-text-500);
     margin: 0;
+    padding-left: 4px;
   }
   /* 연락처(5번째) */
   .cell {
     font-size: 12px;
     color: var(--ws-text-400);
     margin: 0;
+    padding-left: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
   }
   .table {
     border-radius: 12px;
+    overflow: hidden;
   }
 }

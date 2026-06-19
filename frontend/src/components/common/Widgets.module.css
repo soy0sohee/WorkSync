@@ -1117,8 +1117,9 @@
   .tableRow {
     display: flex !important;
     flex-direction: column !important;
-    padding: 14px 16px !important;
-    gap: 4px !important;
+    align-items: flex-start !important;
+    padding: 16px !important;
+    gap: 2px !important;
   }
   /* 조직도 6컬럼: 이메일(4번째)·입사일(6번째) 숨김 */
   .tableRow > *:nth-child(4),

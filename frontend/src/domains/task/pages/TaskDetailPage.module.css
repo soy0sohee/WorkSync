@@ -280,27 +280,55 @@
 }
 
 @media (max-width: 767px) {
+  /* infoCol: flex → grid 2컬럼 (label | value 자동 쌍) */
+  .infoCol {
+    display: grid !important;
+    grid-template-columns: 68px 1fr;
+    align-items: stretch;
+    border-top: 1px solid #f3f4f6;
+    padding: 0;
+  }
+  .infoCol:nth-last-child(1) {
+    border-bottom: 1px solid #f3f4f6;
+  }
   .infoLabel {
-    width: 72px;
-    padding: 12px 8px 12px 12px;
+    width: auto;
+    padding: 10px 8px 10px 12px;
     font-size: 11px;
-    flex-shrink: 0;
+    background: #f9fafb;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    border-right: 1px solid #f3f4f6;
   }
   .infoValue {
-    padding: 0 8px;
-    font-size: 12px;
+    padding: 10px 10px;
+    font-size: 12.5px;
+    margin: 0;
+    display: flex;
+    align-items: center;
     overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .infoCol {
-    align-items: flex-start;
-    flex-wrap: nowrap;
   }
   .assigneeValue {
-    flex-wrap: wrap;
-    gap: 4px;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow: hidden;
+  }
+  .assigneeValue span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+  }
+  .ColWrapper {
+    border-radius: 8px;
+    overflow: hidden;
   }
   .layout {
     gap: 12px;
+  }
+  .infoGrid {
+    min-height: unset;
+    gap: 0;
   }
 }
